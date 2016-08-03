@@ -65,16 +65,18 @@ $users = $api->getRequest(
         )
 );
 
-$api->postRequest(
+$result = $api->postRequest(
     FluentRequest::factory()
-        ->setAction('emailuser')
+        ->setAction('emailuser-html')
         ->addParams(
             array(
                 'token'=>$api->getToken('email'),
                 'target'=>'Rudloff',
                 'subject'=>'Test',
-                'text'=>'Adresses modifiées :'.PHP_EOL.
-                '* 22 rue de Bâle : http://localhost/archi-mediawiki/index.php/Adresse:22_rue_de_B%C3%A2le_(Strasbourg)'
+                'text'=>'Expedita nisi iste quia. Debitis est nulla consequatur voluptatibus et porro aliquam beatae. Sunt repellat quia ad qui doloribus.',
+                'html'=>'<b>Expedita nisi iste quia. Debitis est nulla consequatur voluptatibus et porro aliquam beatae. Sunt repellat quia ad qui doloribus.</b>'
             )
         )
 );
+
+dump($result);
