@@ -9,16 +9,16 @@
     "packages": [
         {
             "name": "addwiki/mediawiki-api-base",
-            "version": "2.2.0",
+            "version": "2.2.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/addwiki/mediawiki-api-base.git",
-                "reference": "89ec264148a0e085ae2d317faeb5550993bd8962"
+                "reference": "a03e58b6806d2e141744dd4a668116ca4f9b141e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/addwiki/mediawiki-api-base/zipball/89ec264148a0e085ae2d317faeb5550993bd8962",
-                "reference": "89ec264148a0e085ae2d317faeb5550993bd8962",
+                "url": "https://api.github.com/repos/addwiki/mediawiki-api-base/zipball/a03e58b6806d2e141744dd4a668116ca4f9b141e",
+                "reference": "a03e58b6806d2e141744dd4a668116ca4f9b141e",
                 "shasum": ""
             },
             "require": {
@@ -51,7 +51,7 @@
             "keywords": [
                 "mediawiki"
             ],
-            "time": "2016-01-18 11:00:11"
+            "time": "2016-08-03 18:24:14"
         },
         {
             "name": "guzzlehttp/guzzle",
@@ -277,16 +277,16 @@
         },
         {
             "name": "psr/http-message",
-            "version": "1.0",
+            "version": "1.0.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/php-fig/http-message.git",
-                "reference": "85d63699f0dbedb190bbd4b0d2b9dc707ea4c298"
+                "reference": "f6561bf28d520154e4b0ec72be95418abe6d9363"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/php-fig/http-message/zipball/85d63699f0dbedb190bbd4b0d2b9dc707ea4c298",
-                "reference": "85d63699f0dbedb190bbd4b0d2b9dc707ea4c298",
+                "url": "https://api.github.com/repos/php-fig/http-message/zipball/f6561bf28d520154e4b0ec72be95418abe6d9363",
+                "reference": "f6561bf28d520154e4b0ec72be95418abe6d9363",
                 "shasum": ""
             },
             "require": {
@@ -314,6 +314,7 @@
                 }
             ],
             "description": "Common interface for HTTP messages",
+            "homepage": "https://github.com/php-fig/http-message",
             "keywords": [
                 "http",
                 "http-message",
@@ -322,7 +323,7 @@
                 "request",
                 "response"
             ],
-            "time": "2015-05-04 20:22:00"
+            "time": "2016-08-06 14:39:51"
         },
         {
             "name": "psr/log",
