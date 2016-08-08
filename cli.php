@@ -54,6 +54,13 @@ $recentchanges = $api->getRequest(
         )
 );
 
+$html = $text = '';
+
+foreach ($recentchanges['query']['recentchanges'] as $change) {
+    $html .= '<li>'.$change['title'].'</li>';
+    $text .= '* '.$change['title'];
+}
+
 $users = $api->getRequest(
     FluentRequest::factory()
         ->setAction('query')
@@ -64,19 +71,23 @@ $users = $api->getRequest(
             )
         )
 );
-
-$result = $api->postRequest(
-    FluentRequest::factory()
-        ->setAction('emailuser-html')
-        ->addParams(
-            array(
-                'token'=>$api->getToken('email'),
-                'target'=>'Rudloff',
-                'subject'=>'Test',
-                'text'=>'Expedita nisi iste quia. Debitis est nulla consequatur voluptatibus et porro aliquam beatae. Sunt repellat quia ad qui doloribus.',
-                'html'=>'<b>Expedita nisi iste quia. Debitis est nulla consequatur voluptatibus et porro aliquam beatae. Sunt repellat quia ad qui doloribus.</b>'
-            )
-        )
-);
-
-dump($result);
+foreach ($users['query']['allusers'] as $user) {
+    try {
+        $result = $api->postRequest(
+            FluentRequest::factory()
+                ->setAction('emailuser-html')
+                ->addParams(
+                    array(
+                        'token'=>$api->getToken('email'),
+                        'target'=>$user['name'],
+                        'subject'=>'Test',
+                        'text'=>$text,
+                        'html'=>$html
+                    )
+                )
+        );
+        $climate->green()->out('Email sent to '.$user['name']);
+    } catch (Exception $e) {
+        $climate->red()->out("Can't send email to ".$user['name']);
+    }
+}
