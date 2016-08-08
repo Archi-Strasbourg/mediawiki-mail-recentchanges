@@ -1,3 +1,4 @@
 language: php
 install:
-- composer install --no-dev
+- composer install
+script: ./vendor/bin/phpunit
