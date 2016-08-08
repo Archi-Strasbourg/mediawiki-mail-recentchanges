@@ -16,12 +16,25 @@ module.exports = function (grunt) {
                 Gruntfile: {
                     src: ['Gruntfile.js']
                 }
+            },
+            phpunit: {
+                options: {
+                    bin: 'php -dzend_extension=xdebug.so ./vendor/bin/phpunit',
+                    stopOnError: true,
+                    stopOnFailure: true,
+                    followOutput: true
+                },
+                classes: {
+                    dir: 'tests/'
+                }
             }
         }
     );
 
     grunt.loadNpmTasks('grunt-phpcs');
     grunt.loadNpmTasks('grunt-jslint');
+    grunt.loadNpmTasks('grunt-phpunit');
 
     grunt.registerTask('lint', ['phpcs', 'jslint']);
+    grunt.registerTask('test', ['phpunit']);
 };

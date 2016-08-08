@@ -3,30 +3,36 @@
 namespace MediawikiMailRecentChanges;
 
 use Psr\Log\AbstractLogger;
+use League\CLImate\CLImate;
 
 class Logger extends AbstractLogger
 {
 
     private $climate;
+    private $debug = false;
 
-    public function __construct($climate)
+    public function __construct(CLImate $climate)
     {
         $this->climate = $climate;
+        if ($this->climate->arguments->get('debug')) {
+            $this->debug = true;
+        }
     }
 
     public function log($level, $message, array $context = array())
     {
-        if ($this->climate->arguments->get('debug')) {
+        if ($this->debug) {
             switch ($level) {
                 case 'info':
-                    $this->climate->green($message);
+                    $this->climate->info($message);
                     break;
                 case 'error':
-                    $this->climate->red($message);
+                    $this->climate->error($message);
                     break;
                 default:
                     $this->climate->output($message);
             }
         }
+        return $message;
     }
 }
