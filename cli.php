@@ -1,4 +1,7 @@
 <?php
+
+namespace MediawikiMailRecentChanges;
+
 use League\CLImate\CLImate;
 use Mediawiki\Api\FluentRequest;
 use Mediawiki\Api\MediawikiApi;
@@ -26,6 +29,12 @@ $climate->arguments->add(
             'required'=>true,
             'prefix'=>'p',
             'longPrefix'=>'password'
+        ),
+        'debug'=>array(
+            'description'=>'Output debug info',
+            'noValue'=>true,
+            'prefix'=>'d',
+            'longPrefix'=>'debug'
         )
     )
 );
@@ -58,7 +67,7 @@ $html = $text = '';
 
 foreach ($recentchanges['query']['recentchanges'] as $change) {
     $html .= '<li>'.$change['title'].'</li>';
-    $text .= '* '.$change['title'];
+    $text .= '* '.$change['title'].PHP_EOL;
 }
 
 $users = $api->getRequest(
@@ -71,6 +80,9 @@ $users = $api->getRequest(
             )
         )
 );
+
+$logger = new Logger($climate);
+
 foreach ($users['query']['allusers'] as $user) {
     try {
         $result = $api->postRequest(
@@ -86,8 +98,8 @@ foreach ($users['query']['allusers'] as $user) {
                     )
                 )
         );
-        $climate->green()->out('Email sent to '.$user['name']);
-    } catch (Exception $e) {
-        $climate->red()->out("Can't send email to ".$user['name']);
+        $logger->info('Email sent to '.$user['name']);
+    } catch (\Mediawiki\Api\UsageException $e) {
+        $logger->error("Can't send email to ".$user['name']);
     }
 }
