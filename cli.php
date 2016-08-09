@@ -12,6 +12,18 @@ require_once __DIR__.'/vendor/autoload.php';
 $climate = new CLImate();
 $climate->arguments->add(
     array(
+        'help'=>array(
+            'description'=>'Display help',
+            'noValue'=>true,
+            'prefix'=>'h',
+            'longPrefix'=>'help'
+        )
+    )
+);
+$climate->arguments->parse();
+
+$climate->arguments->add(
+    array(
         'apiUrl'=>array(
             'description'=>'MediaWiki API URL',
             'required'=>true,
@@ -38,6 +50,10 @@ $climate->arguments->add(
         )
     )
 );
+if ($climate->arguments->get('help')) {
+    $climate->usage();
+    die;
+}
 $climate->arguments->parse();
 
 $api = MediawikiApi::newFromApiEndpoint($climate->arguments->get('apiUrl'));
