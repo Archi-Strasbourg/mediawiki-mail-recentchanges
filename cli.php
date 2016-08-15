@@ -53,6 +53,12 @@ if (php_sapi_name() == 'cli') {
                 'prefix'=>'t',
                 'longPrefix'=>'title'
             ),
+            'namespace'=>array(
+                'description'=>'MediaWiki namespace',
+                'required'=>false,
+                'prefix'=>'ns',
+                'longPrefix'=>'namespace'
+            ),
             'debug'=>array(
                 'description'=>'Output debug info',
                 'noValue'=>true,
@@ -82,7 +88,7 @@ $recentchanges = $api->getRequest(
         ->addParams(
             array(
                 'list'=>'recentchanges',
-                'rcnamespace'=>4000,
+                'rcnamespace'=>$params->get('namespace'),
                 'rctype'=>'edit',
                 'rctoponly'=>true,
                 'rclimit'=>500,
