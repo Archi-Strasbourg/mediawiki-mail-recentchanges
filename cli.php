@@ -81,8 +81,9 @@ $api->login(
         $params->get('password')
     )
 );
+$namespace = $params->get('namespace');
 
-$recentchanges = $api->getRequest(
+$recentChanges = $api->getRequest(
     FluentRequest::factory()
         ->setAction('query')
         ->addParams(
@@ -96,6 +97,29 @@ $recentchanges = $api->getRequest(
             )
         )
 );
+
+$newArticles = $api->getRequest(
+    FluentRequest::factory()
+        ->setAction('query')
+        ->addParams(
+            array(
+                'list'=>'recentchanges',
+                'rcnamespace'=>$namespace,
+                'rctype'=>'new',
+                'rclimit'=>500,
+                'rcprop'=>'title|timestamp|ids'
+            )
+        )
+);
+
+foreach ($recentChanges['query']['recentchanges'] as $i => $change) {
+    foreach ($newArticles['query']['recentchanges'] as $new) {
+        if ($change['title'] == $new['title']) {
+            unset($recentChanges['query']['recentchanges'][$i]);
+            break;
+        }
+    }
+}
 
 $users = $api->getRequest(
     FluentRequest::factory()
@@ -113,18 +137,26 @@ $siteInfo = $api->getRequest(
         ->setAction('query')
         ->addParams(
             array(
-                'meta'=>'siteinfo'
+                'meta'=>'siteinfo',
+                'siprop'=>'general|namespaces'
             )
         )
 );
 $title = $params->get('title');
 $smarty->assign(
     array(
-        'recentchanges'=>$recentchanges['query']['recentchanges'],
+        'recentChanges'=>$recentChanges['query']['recentchanges'],
+        'newArticles'=>$newArticles['query']['recentchanges'],
         'title'=>$title,
         'wiki'=>array(
             'name'=>$siteInfo['query']['general']['sitename'],
-            'url'=>$siteInfo['query']['general']['base']
+            'url'=>str_replace(
+                $siteInfo['query']['general']['mainpage'],
+                '',
+                urldecode($siteInfo['query']['general']['base'])
+            ),
+            'lang'=>$siteInfo['query']['general']['lang'],
+            'namespace'=>$siteInfo['query']['namespaces'][$namespace]['canonical'].':'
         )
     )
 );
