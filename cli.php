@@ -6,6 +6,7 @@ use League\CLImate\CLImate;
 use Mediawiki\Api\FluentRequest;
 use Mediawiki\Api\MediawikiApi;
 use Mediawiki\Api\ApiUser;
+use Html2Text\Html2Text;
 
 require_once __DIR__.'/vendor/autoload.php';
 
@@ -101,6 +102,9 @@ if (php_sapi_name() == 'apache2handler') {
     $smarty->display('mail_html.tpl');
 } else {
     $logger = new Logger($climate);
+    $html = $smarty->fetch('mail_html.tpl');
+    $token = $api->getToken('email');
+    $plaintext = new Html2Text($html);
     foreach ($users['query']['allusers'] as $user) {
         try {
             $result = $api->postRequest(
@@ -108,11 +112,11 @@ if (php_sapi_name() == 'apache2handler') {
                     ->setAction('emailuser-html')
                     ->addParams(
                         array(
-                            'token'=>$api->getToken('email'),
+                            'token'=>$token,
                             'target'=>$user['name'],
                             'subject'=>'Test',
-                            'text'=>$smarty->fetch('mail_text.tpl'),
-                            'html'=>$smarty->fetch('mail_html.tpl')
+                            'text'=>$plaintext->getText(),
+                            'html'=>$html
                         )
                     )
             );
