@@ -136,11 +136,18 @@ $siteInfo = $api->getRequest(
         ->addParams(
             array(
                 'meta'=>'siteinfo',
-                'siprop'=>'general|namespaces'
+                'siprop'=>'general|namespaces|extensions'
             )
         )
 );
 
+$emailApiName = 'emailuser';
+foreach ($siteInfo['query']['extensions'] as $extension) {
+    if ($extension['name'] == 'EmailuserHtml') {
+        $emailApiName = 'emailuser-html';
+        break;
+    }
+}
 
 $title = $params->get('title');
 $changeList = new ChangeList($recentChanges['query']['recentchanges'], $newArticles['query']['recentchanges']);
@@ -177,7 +184,7 @@ if (php_sapi_name() == 'apache2handler') {
         try {
             $result = $api->postRequest(
                 FluentRequest::factory()
-                    ->setAction('emailuser-html')
+                    ->setAction($emailApiName)
                     ->addParams(
                         array(
                             'token'=>$token,
