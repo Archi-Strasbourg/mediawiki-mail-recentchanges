@@ -112,15 +112,6 @@ $newArticles = $api->getRequest(
         )
 );
 
-foreach ($recentChanges['query']['recentchanges'] as $i => $change) {
-    foreach ($newArticles['query']['recentchanges'] as $new) {
-        if ($change['title'] == $new['title']) {
-            unset($recentChanges['query']['recentchanges'][$i]);
-            break;
-        }
-    }
-}
-
 $users = $api->getRequest(
     FluentRequest::factory()
         ->setAction('query')
@@ -142,11 +133,13 @@ $siteInfo = $api->getRequest(
             )
         )
 );
+
+
 $title = $params->get('title');
+$changeList = new ChangeList($recentChanges['query']['recentchanges'], $newArticles['query']['recentchanges']);
 $smarty->assign(
     array(
-        'recentChanges'=>$recentChanges['query']['recentchanges'],
-        'newArticles'=>$newArticles['query']['recentchanges'],
+        'recentChanges'=>$changeList->getAll($params->get('groupby')),
         'title'=>$title,
         'wiki'=>array(
             'name'=>$siteInfo['query']['general']['sitename'],
