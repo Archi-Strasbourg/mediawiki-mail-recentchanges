@@ -108,11 +108,24 @@ $users = $api->getRequest(
         )
 );
 
+$siteInfo = $api->getRequest(
+    FluentRequest::factory()
+        ->setAction('query')
+        ->addParams(
+            array(
+                'meta'=>'siteinfo'
+            )
+        )
+);
 $title = $params->get('title');
 $smarty->assign(
     array(
         'recentchanges'=>$recentchanges['query']['recentchanges'],
-        'title'=>$title
+        'title'=>$title,
+        'wiki'=>array(
+            'name'=>$siteInfo['query']['general']['sitename'],
+            'url'=>$siteInfo['query']['general']['base']
+        )
     )
 );
 
