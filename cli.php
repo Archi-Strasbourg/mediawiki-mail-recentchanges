@@ -144,6 +144,11 @@ $siteInfo = $api->getRequest(
 
 $title = $params->get('title');
 $changeList = new ChangeList($recentChanges['query']['recentchanges'], $newArticles['query']['recentchanges']);
+if (isset($namespace)) {
+    $namespacePrefix = $siteInfo['query']['namespaces'][$namespace]['canonical'].':';
+} else {
+    $namespacePrefix = '';
+}
 $smarty->assign(
     array(
         'recentChanges'=>$changeList->getAll($params->get('groupby')),
@@ -156,7 +161,7 @@ $smarty->assign(
                 urldecode($siteInfo['query']['general']['base'])
             ),
             'lang'=>$siteInfo['query']['general']['lang'],
-            'namespace'=>$siteInfo['query']['namespaces'][$namespace]['canonical'].':'
+            'namespace'=>$namespacePrefix
         )
     )
 );
