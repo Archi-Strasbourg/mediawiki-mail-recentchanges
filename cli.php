@@ -47,6 +47,12 @@ if (php_sapi_name() == 'cli') {
                 'prefix'=>'p',
                 'longPrefix'=>'password'
             ),
+            'title'=>array(
+                'description'=>'E-mail title',
+                'required'=>true,
+                'prefix'=>'t',
+                'longPrefix'=>'title'
+            ),
             'debug'=>array(
                 'description'=>'Output debug info',
                 'noValue'=>true,
@@ -85,8 +91,6 @@ $recentchanges = $api->getRequest(
         )
 );
 
-$smarty->assign('recentchanges', $recentchanges['query']['recentchanges']);
-
 $users = $api->getRequest(
     FluentRequest::factory()
         ->setAction('query')
@@ -98,11 +102,19 @@ $users = $api->getRequest(
         )
 );
 
+$title = $params->get('title');
+$smarty->assign(
+    array(
+        'recentchanges'=>$recentchanges['query']['recentchanges'],
+        'title'=>$title
+    )
+);
+
 if (php_sapi_name() == 'apache2handler') {
-    $smarty->display('mail_html.tpl');
+    $smarty->display('mail.tpl');
 } else {
     $logger = new Logger($climate);
-    $html = $smarty->fetch('mail_html.tpl');
+    $html = $smarty->fetch('mail.tpl');
     $token = $api->getToken('email');
     $plaintext = new Html2Text($html);
     foreach ($users['query']['allusers'] as $user) {
@@ -114,7 +126,7 @@ if (php_sapi_name() == 'apache2handler') {
                         array(
                             'token'=>$token,
                             'target'=>$user['name'],
-                            'subject'=>'Test',
+                            'subject'=>$title,
                             'text'=>$plaintext->getText(),
                             'html'=>$html
                         )
