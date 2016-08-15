@@ -57,7 +57,8 @@ if (php_sapi_name() == 'cli') {
                 'description'=>'MediaWiki namespace',
                 'required'=>false,
                 'prefix'=>'ns',
-                'longPrefix'=>'namespace'
+                'longPrefix'=>'namespace',
+                'castTo'=>'int'
             ),
             'debug'=>array(
                 'description'=>'Output debug info',
