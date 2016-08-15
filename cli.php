@@ -60,6 +60,12 @@ if (php_sapi_name() == 'cli') {
                 'longPrefix'=>'namespace',
                 'castTo'=>'int'
             ),
+            'groupby'=>array(
+                'description'=>'Group recent changes. Possible values : parentheses',
+                'required'=>false,
+                'prefix'=>'g',
+                'longPrefix'=>'groupby'
+            ),
             'debug'=>array(
                 'description'=>'Output debug info',
                 'noValue'=>true,
