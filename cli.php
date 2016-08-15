@@ -12,7 +12,7 @@ require_once __DIR__.'/vendor/autoload.php';
 
 $smarty = new \Smarty();
 $climate = new CLImate();
-$params = new ParametersManager($climate);
+$params = new ParameterManager($climate);
 
 if (php_sapi_name() == 'cli') {
     $climate->arguments->add(

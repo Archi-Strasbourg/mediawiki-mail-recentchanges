@@ -3,7 +3,7 @@ namespace MediawikiMailRecentChanges;
 
 use League\CLImate\CLImate;
 
-class ParametersManager
+class ParameterManager
 {
     private $climate;
 
