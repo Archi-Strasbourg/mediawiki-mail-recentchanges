@@ -9,58 +9,63 @@ use Mediawiki\Api\ApiUser;
 
 require_once __DIR__.'/vendor/autoload.php';
 
+$smarty = new \Smarty();
 $climate = new CLImate();
-$climate->arguments->add(
-    array(
-        'help'=>array(
-            'description'=>'Display help',
-            'noValue'=>true,
-            'prefix'=>'h',
-            'longPrefix'=>'help'
-        )
-    )
-);
-$climate->arguments->parse();
+$params = new ParametersManager($climate);
 
-$climate->arguments->add(
-    array(
-        'apiUrl'=>array(
-            'description'=>'MediaWiki API URL',
-            'required'=>true,
-            'prefix'=>'api',
-            'longPrefix'=>'api-url'
-        ),
-        'username'=>array(
-            'description'=>'MediaWiki username',
-            'required'=>true,
-            'prefix'=>'u',
-            'longPrefix'=>'username'
-        ),
-        'password'=>array(
-            'description'=>'MediaWiki password',
-            'required'=>true,
-            'prefix'=>'p',
-            'longPrefix'=>'password'
-        ),
-        'debug'=>array(
-            'description'=>'Output debug info',
-            'noValue'=>true,
-            'prefix'=>'d',
-            'longPrefix'=>'debug'
+if (php_sapi_name() == 'cli') {
+    $climate->arguments->add(
+        array(
+            'help'=>array(
+                'description'=>'Display help',
+                'noValue'=>true,
+                'prefix'=>'h',
+                'longPrefix'=>'help'
+            )
         )
-    )
-);
-if ($climate->arguments->get('help')) {
-    $climate->usage();
-    die;
+    );
+    $climate->arguments->parse();
+
+    $climate->arguments->add(
+        array(
+            'apiUrl'=>array(
+                'description'=>'MediaWiki API URL',
+                'required'=>true,
+                'prefix'=>'api',
+                'longPrefix'=>'api-url'
+            ),
+            'username'=>array(
+                'description'=>'MediaWiki username',
+                'required'=>true,
+                'prefix'=>'u',
+                'longPrefix'=>'username'
+            ),
+            'password'=>array(
+                'description'=>'MediaWiki password',
+                'required'=>true,
+                'prefix'=>'p',
+                'longPrefix'=>'password'
+            ),
+            'debug'=>array(
+                'description'=>'Output debug info',
+                'noValue'=>true,
+                'prefix'=>'d',
+                'longPrefix'=>'debug'
+            )
+        )
+    );
+    if ($climate->arguments->get('help')) {
+        $climate->usage();
+        die;
+    }
+    $climate->arguments->parse();
 }
-$climate->arguments->parse();
 
-$api = MediawikiApi::newFromApiEndpoint($climate->arguments->get('apiUrl'));
+$api = MediawikiApi::newFromApiEndpoint($params->get('apiUrl'));
 $api->login(
     new ApiUser(
-        $climate->arguments->get('username'),
-        $climate->arguments->get('password')
+        $params->get('username'),
+        $params->get('password')
     )
 );
 
@@ -79,12 +84,7 @@ $recentchanges = $api->getRequest(
         )
 );
 
-$html = $text = '';
-
-foreach ($recentchanges['query']['recentchanges'] as $change) {
-    $html .= '<li>'.$change['title'].'</li>';
-    $text .= '* '.$change['title'].PHP_EOL;
-}
+$smarty->assign('recentchanges', $recentchanges['query']['recentchanges']);
 
 $users = $api->getRequest(
     FluentRequest::factory()
@@ -97,25 +97,28 @@ $users = $api->getRequest(
         )
 );
 
-$logger = new Logger($climate);
-
-foreach ($users['query']['allusers'] as $user) {
-    try {
-        $result = $api->postRequest(
-            FluentRequest::factory()
-                ->setAction('emailuser-html')
-                ->addParams(
-                    array(
-                        'token'=>$api->getToken('email'),
-                        'target'=>$user['name'],
-                        'subject'=>'Test',
-                        'text'=>$text,
-                        'html'=>$html
+if (php_sapi_name() == 'apache2handler') {
+    $smarty->display('mail_html.tpl');
+} else {
+    $logger = new Logger($climate);
+    foreach ($users['query']['allusers'] as $user) {
+        try {
+            $result = $api->postRequest(
+                FluentRequest::factory()
+                    ->setAction('emailuser-html')
+                    ->addParams(
+                        array(
+                            'token'=>$api->getToken('email'),
+                            'target'=>$user['name'],
+                            'subject'=>'Test',
+                            'text'=>$smarty->fetch('mail_text.tpl'),
+                            'html'=>$smarty->fetch('mail_html.tpl')
+                        )
                     )
-                )
-        );
-        $logger->info('Email sent to '.$user['name']);
-    } catch (\Mediawiki\Api\UsageException $e) {
-        $logger->error("Can't send email to ".$user['name']);
+            );
+            $logger->info('Email sent to '.$user['name']);
+        } catch (\Mediawiki\Api\UsageException $e) {
+            $logger->error("Can't send email to ".$user['name']);
+        }
     }
 }
