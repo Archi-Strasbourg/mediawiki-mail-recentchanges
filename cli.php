@@ -188,9 +188,9 @@ if (php_sapi_name() == 'apache2handler') {
                         )
                     )
             );
-            $logger->info('Email sent to '.$user['name']);
+            $logger->info('E-mail sent to '.$user['name']);
         } catch (\Mediawiki\Api\UsageException $e) {
-            $logger->error("Can't send email to ".$user['name']);
+            $logger->error("Can't send e-mail to ".$user['name']);
         }
     }
 }
