@@ -6,7 +6,6 @@ use League\CLImate\CLImate;
 use Mediawiki\Api\FluentRequest;
 use Mediawiki\Api\MediawikiApi;
 use Mediawiki\Api\ApiUser;
-use Html2Text\Html2Text;
 
 require_once __DIR__.'/vendor/autoload.php';
 
@@ -71,6 +70,10 @@ if (php_sapi_name() == 'cli') {
                 'noValue'=>true,
                 'prefix'=>'d',
                 'longPrefix'=>'debug'
+            ),
+            'target'=>array(
+                'description'=>'Send email to a specific user',
+                'longPrefix'=>'target'
             )
         )
     );
@@ -176,28 +179,14 @@ $smarty->assign(
 if (php_sapi_name() == 'apache2handler') {
     $smarty->display('mail.tpl');
 } else {
-    $logger = new Logger($climate);
     $html = $smarty->fetch('mail.tpl');
-    $token = $api->getToken('email');
-    $plaintext = new Html2Text($html);
-    foreach ($users['query']['allusers'] as $user) {
-        try {
-            $result = $api->postRequest(
-                FluentRequest::factory()
-                    ->setAction($emailApiName)
-                    ->addParams(
-                        array(
-                            'token'=>$token,
-                            'target'=>$user['name'],
-                            'subject'=>$title,
-                            'text'=>$plaintext->getText(),
-                            'html'=>$html
-                        )
-                    )
-            );
-            $logger->info('E-mail sent to '.$user['name']);
-        } catch (\Mediawiki\Api\UsageException $e) {
-            $logger->error("Can't send e-mail to ".$user['name']);
+    $target = $params->get('target');
+    $mailer = new Mailer($api, $emailApiName, new Logger($climate));
+    if (isset($target)) {
+        $mailer->send($target, $html, $title);
+    } else {
+        foreach ($users['query']['allusers'] as $user) {
+            $mailer->send($user['name'], $html, $title);
         }
     }
 }
