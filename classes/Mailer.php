@@ -41,8 +41,14 @@ class Mailer
             $this->logger->info('E-mail sent to '.$user);
             return true;
         } catch (\Mediawiki\Api\UsageException $e) {
-            $this->logger->error("Can't send e-mail to ".$user);
-            return false;
+            $expectedMessage = 'The user has not specified a valid email address, '.
+                'or has chosen not to receive email from other users';
+            if ($e->getMessage() == $expectedMessage) {
+                $this->logger->error("Can't send e-mail to ".$user);
+                return false;
+            } else {
+                throw($e);
+            }
         }
     }
 }
