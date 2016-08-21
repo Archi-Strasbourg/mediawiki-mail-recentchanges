@@ -52,18 +52,24 @@ if (php_sapi_name() == 'cli') {
                 'prefix'=>'t',
                 'longPrefix'=>'title'
             ),
-            'namespace'=>array(
-                'description'=>'MediaWiki namespace',
+            'namespaces'=>array(
+                'description'=>'MediaWiki namespaces',
                 'required'=>false,
                 'prefix'=>'ns',
-                'longPrefix'=>'namespace',
-                'castTo'=>'int'
+                'longPrefix'=>'namespaces',
+                'castTo'=>'string'
             ),
             'groupby'=>array(
                 'description'=>'Group recent changes. Possible values : parentheses',
                 'required'=>false,
                 'prefix'=>'g',
                 'longPrefix'=>'groupby'
+            ),
+            'nsgroupby'=>array(
+                'description'=>'Namespaces for which we must group changes',
+                'required'=>false,
+                'prefix'=>'nsg',
+                'longPrefix'=>'nsgroupby'
             ),
             'debug'=>array(
                 'description'=>'Output debug info',
@@ -91,47 +97,6 @@ $api->login(
         $params->get('password')
     )
 );
-$namespace = $params->get('namespace');
-
-$recentChanges = $api->getRequest(
-    FluentRequest::factory()
-        ->setAction('query')
-        ->addParams(
-            array(
-                'list'=>'recentchanges',
-                'rcnamespace'=>$params->get('namespace'),
-                'rctype'=>'edit',
-                'rctoponly'=>true,
-                'rclimit'=>500,
-                'rcprop'=>'title|timestamp|ids'
-            )
-        )
-);
-
-$newArticles = $api->getRequest(
-    FluentRequest::factory()
-        ->setAction('query')
-        ->addParams(
-            array(
-                'list'=>'recentchanges',
-                'rcnamespace'=>$namespace,
-                'rctype'=>'new',
-                'rclimit'=>500,
-                'rcprop'=>'title|timestamp|ids'
-            )
-        )
-);
-
-$users = $api->getRequest(
-    FluentRequest::factory()
-        ->setAction('query')
-        ->addParams(
-            array(
-                'list'=>'allusers',
-                'aulimit'=>5000
-            )
-        )
-);
 
 $siteInfo = $api->getRequest(
     FluentRequest::factory()
@@ -140,6 +105,59 @@ $siteInfo = $api->getRequest(
             array(
                 'meta'=>'siteinfo',
                 'siprop'=>'general|namespaces|extensions'
+            )
+        )
+);
+
+$changeLists = array();
+foreach (array_map('intval', explode(',', $params->get('namespaces'))) as $namespace) {
+    $recentChanges = $api->getRequest(
+        FluentRequest::factory()
+            ->setAction('query')
+            ->addParams(
+                array(
+                    'list'=>'recentchanges',
+                    'rcnamespace'=>$namespace,
+                    'rctype'=>'edit',
+                    'rctoponly'=>true,
+                    'rclimit'=>500,
+                    'rcprop'=>'title|timestamp|ids'
+                )
+            )
+    );
+
+    $newArticles = $api->getRequest(
+        FluentRequest::factory()
+            ->setAction('query')
+            ->addParams(
+                array(
+                    'list'=>'recentchanges',
+                    'rcnamespace'=>$namespace,
+                    'rctype'=>'new',
+                    'rclimit'=>500,
+                    'rcprop'=>'title|timestamp|ids'
+                )
+            )
+    );
+
+    $changeList = new ChangeList($recentChanges['query']['recentchanges'], $newArticles['query']['recentchanges']);
+    if (in_array($namespace, explode(',', $params->get('nsgroupby')))) {
+        $changeLists[$siteInfo['query']['namespaces'][$namespace]['canonical']] =
+            $changeList->getAll($params->get('groupby'));
+    } elseif ($namespace == 0) {
+        $changeLists[null] = $changeList->getAll();
+    } else {
+        $changeLists[$siteInfo['query']['namespaces'][$namespace]['canonical']] = $changeList->getAll();
+    }
+}
+
+$users = $api->getRequest(
+    FluentRequest::factory()
+        ->setAction('query')
+        ->addParams(
+            array(
+                'list'=>'allusers',
+                'aulimit'=>5000
             )
         )
 );
@@ -153,15 +171,9 @@ foreach ($siteInfo['query']['extensions'] as $extension) {
 }
 
 $title = $params->get('title');
-$changeList = new ChangeList($recentChanges['query']['recentchanges'], $newArticles['query']['recentchanges']);
-if (isset($namespace)) {
-    $namespacePrefix = $siteInfo['query']['namespaces'][$namespace]['canonical'].':';
-} else {
-    $namespacePrefix = '';
-}
 $smarty->assign(
     array(
-        'recentChanges'=>$changeList->getAll($params->get('groupby')),
+        'changeLists'=>$changeLists,
         'title'=>$title,
         'wiki'=>array(
             'name'=>$siteInfo['query']['general']['sitename'],
@@ -170,8 +182,7 @@ $smarty->assign(
                 '',
                 urldecode($siteInfo['query']['general']['base'])
             ),
-            'lang'=>$siteInfo['query']['general']['lang'],
-            'namespace'=>$namespacePrefix
+            'lang'=>$siteInfo['query']['general']['lang']
         )
     )
 );
