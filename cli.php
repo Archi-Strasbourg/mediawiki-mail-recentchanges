@@ -141,11 +141,11 @@ foreach (array_map('intval', explode(',', $params->get('namespaces'))) as $names
     );
 
     $changeList = new ChangeList($recentChanges['query']['recentchanges'], $newArticles['query']['recentchanges']);
-    if (in_array($namespace, explode(',', $params->get('nsgroupby')))) {
+    if ($namespace == 0) {
+        $changeLists[null] = $changeList->getAll();
+    } elseif (in_array($namespace, explode(',', $params->get('nsgroupby')))) {
         $changeLists[$siteInfo['query']['namespaces'][$namespace]['canonical']] =
             $changeList->getAll($params->get('groupby'));
-    } elseif ($namespace == 0) {
-        $changeLists[null] = $changeList->getAll();
     } else {
         $changeLists[$siteInfo['query']['namespaces'][$namespace]['canonical']] = $changeList->getAll();
     }
