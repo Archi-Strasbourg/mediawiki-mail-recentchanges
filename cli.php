@@ -111,6 +111,8 @@ $siteInfo = $api->getRequest(
 
 $changeLists = array();
 foreach (array_map('intval', explode(',', $params->get('namespaces'))) as $namespace) {
+    $endDate = new \DateTime();
+    $endDate->sub(new \DateInterval('P1W'));
     $recentChanges = $api->getRequest(
         FluentRequest::factory()
             ->setAction('query')
@@ -121,6 +123,7 @@ foreach (array_map('intval', explode(',', $params->get('namespaces'))) as $names
                     'rctype'=>'edit',
                     'rctoponly'=>true,
                     'rclimit'=>500,
+                    'rcend'=>$endDate->format('r'),
                     'rcprop'=>'title|timestamp|ids'
                 )
             )
@@ -135,6 +138,7 @@ foreach (array_map('intval', explode(',', $params->get('namespaces'))) as $names
                     'rcnamespace'=>$namespace,
                     'rctype'=>'new',
                     'rclimit'=>500,
+                    'rcend'=>$endDate->format('r'),
                     'rcprop'=>'title|timestamp|ids'
                 )
             )
