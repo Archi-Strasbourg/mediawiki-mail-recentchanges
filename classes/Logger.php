@@ -2,12 +2,11 @@
 
 namespace MediawikiMailRecentChanges;
 
-use Psr\Log\AbstractLogger;
 use League\CLImate\CLImate;
+use Psr\Log\AbstractLogger;
 
 class Logger extends AbstractLogger
 {
-
     private $climate;
     private $debug = false;
 
@@ -19,7 +18,7 @@ class Logger extends AbstractLogger
         }
     }
 
-    public function log($level, $message, array $context = array())
+    public function log($level, $message, array $context = [])
     {
         if ($this->debug) {
             switch ($level) {
@@ -33,6 +32,7 @@ class Logger extends AbstractLogger
                     $this->climate->output($message);
             }
         }
+
         return $message;
     }
 }

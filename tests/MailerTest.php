@@ -1,14 +1,14 @@
 <?php
+
 namespace MediawikiMailRecentChanges\Test;
 
-use MediawikiMailRecentChanges\Mailer;
-use MediawikiMailRecentChanges\Logger;
-use Mediawiki\Api\MediawikiApi;
 use League\CLImate\CLImate;
+use Mediawiki\Api\MediawikiApi;
+use MediawikiMailRecentChanges\Logger;
+use MediawikiMailRecentChanges\Mailer;
 
 class MailerTest extends \PHPUnit_Framework_TestCase
 {
-
     public function testSend()
     {
         $api = $this->createMock('Mediawiki\Api\MediawikiApi');
