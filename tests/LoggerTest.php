@@ -1,12 +1,11 @@
 <?php
+
 namespace MediawikiMailRecentChanges\Test;
 
 use MediawikiMailRecentChanges\Logger;
-use League\CLImate\CLImate;
 
 class LoggerTest extends \PHPUnit_Framework_TestCase
 {
-
     public function testLog()
     {
         $climate = $this->createMock('League\CLImate\CLImate');

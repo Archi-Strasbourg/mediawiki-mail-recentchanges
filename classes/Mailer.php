@@ -1,13 +1,13 @@
 <?php
+
 namespace MediawikiMailRecentChanges;
 
+use Html2Text\Html2Text;
 use Mediawiki\Api\FluentRequest;
 use Mediawiki\Api\MediawikiApi;
-use Html2Text\Html2Text;
 
 class Mailer
 {
-
     private $api;
     private $emailApiName;
     private $token;
@@ -29,22 +29,24 @@ class Mailer
                 FluentRequest::factory()
                     ->setAction($this->emailApiName)
                     ->addParams(
-                        array(
-                            'token'=>$this->token,
-                            'target'=>$user,
-                            'subject'=>$title,
-                            'text'=>$plaintext->getText(),
-                            'html'=>$html
-                        )
+                        [
+                            'token'   => $this->token,
+                            'target'  => $user,
+                            'subject' => $title,
+                            'text'    => $plaintext->getText(),
+                            'html'    => $html,
+                        ]
                     )
             );
             $this->logger->info('E-mail sent to '.$user);
+
             return true;
         } catch (\Mediawiki\Api\UsageException $e) {
             $expectedMessage = 'The user has not specified a valid email address, '.
                 'or has chosen not to receive email from other users';
             if ($e->getMessage() == $expectedMessage) {
                 $this->logger->error("Can't send e-mail to ".$user);
+
                 return false;
             } else {
                 throw($e);

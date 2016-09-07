@@ -1,4 +1,5 @@
 <?php
+
 namespace MediawikiMailRecentChanges;
 
 use League\CLImate\CLImate;
