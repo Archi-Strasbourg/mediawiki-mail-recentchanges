@@ -30,7 +30,7 @@ class Logger extends AbstractLogger
                     $this->climate->error($message);
                     break;
                 default:
-                    $this->climate->output($message);
+                    $this->climate->out($message);
             }
         }
         return $message;
