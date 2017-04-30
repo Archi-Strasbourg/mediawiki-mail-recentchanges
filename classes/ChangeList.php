@@ -21,7 +21,7 @@ class ChangeList
         }
     }
 
-    public function getAll($groupBy = false)
+    public function getAll($groupBy = '')
     {
         $return = array();
         foreach ($this->edits as $change) {
