@@ -90,7 +90,12 @@ if (php_sapi_name() == 'cli') {
     $climate->arguments->parse();
 }
 
-$api = MediawikiApi::newFromApiEndpoint($params->get('apiUrl'));
+$apiUrl = $params->get('apiUrl');
+if (!isset($apiUrl)) {
+    throw new \Exception('Missing API URL');
+}
+
+$api = MediawikiApi::newFromApiEndpoint($apiUrl);
 $api->login(
     new ApiUser(
         $params->get('username'),
