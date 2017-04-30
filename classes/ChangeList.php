@@ -1,9 +1,9 @@
 <?php
+
 namespace MediawikiMailRecentChanges;
 
 class ChangeList
 {
-
     private $edits;
     private $newArticles;
 
@@ -23,7 +23,7 @@ class ChangeList
 
     public function getAll($groupBy = '')
     {
-        $return = array();
+        $return = [];
         foreach ($this->edits as $change) {
             if ($groupBy == 'parentheses') {
                 preg_match('/ \(.+\)/', $change['title'], $match);
@@ -48,6 +48,7 @@ class ChangeList
                 $return['*']['new'][] = $change;
             }
         }
+
         return $return;
     }
 }

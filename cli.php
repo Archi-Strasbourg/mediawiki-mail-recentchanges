@@ -3,9 +3,9 @@
 namespace MediawikiMailRecentChanges;
 
 use League\CLImate\CLImate;
+use Mediawiki\Api\ApiUser;
 use Mediawiki\Api\FluentRequest;
 use Mediawiki\Api\MediawikiApi;
-use Mediawiki\Api\ApiUser;
 
 require_once __DIR__.'/vendor/autoload.php';
 
@@ -15,73 +15,73 @@ $params = new ParameterManager($climate);
 
 if (php_sapi_name() == 'cli') {
     $climate->arguments->add(
-        array(
-            'help'=>array(
-                'description'=>'Display help',
-                'noValue'=>true,
-                'prefix'=>'h',
-                'longPrefix'=>'help'
-            )
-        )
+        [
+            'help' => [
+                'description' => 'Display help',
+                'noValue'     => true,
+                'prefix'      => 'h',
+                'longPrefix'  => 'help',
+            ],
+        ]
     );
     $climate->arguments->parse();
 
     $climate->arguments->add(
-        array(
-            'apiUrl'=>array(
-                'description'=>'MediaWiki API URL',
-                'required'=>true,
-                'prefix'=>'api',
-                'longPrefix'=>'api-url'
-            ),
-            'username'=>array(
-                'description'=>'MediaWiki username',
-                'required'=>true,
-                'prefix'=>'u',
-                'longPrefix'=>'username'
-            ),
-            'password'=>array(
-                'description'=>'MediaWiki password',
-                'required'=>true,
-                'prefix'=>'p',
-                'longPrefix'=>'password'
-            ),
-            'title'=>array(
-                'description'=>'E-mail title',
-                'required'=>true,
-                'prefix'=>'t',
-                'longPrefix'=>'title'
-            ),
-            'namespaces'=>array(
-                'description'=>'MediaWiki namespaces',
-                'required'=>false,
-                'prefix'=>'ns',
-                'longPrefix'=>'namespaces',
-                'castTo'=>'string'
-            ),
-            'groupby'=>array(
-                'description'=>'Group recent changes. Possible values : parentheses',
-                'required'=>false,
-                'prefix'=>'g',
-                'longPrefix'=>'groupby'
-            ),
-            'nsgroupby'=>array(
-                'description'=>'Namespaces for which we must group changes',
-                'required'=>false,
-                'prefix'=>'nsg',
-                'longPrefix'=>'nsgroupby'
-            ),
-            'debug'=>array(
-                'description'=>'Output debug info',
-                'noValue'=>true,
-                'prefix'=>'d',
-                'longPrefix'=>'debug'
-            ),
-            'target'=>array(
-                'description'=>'Send email to a specific user',
-                'longPrefix'=>'target'
-            )
-        )
+        [
+            'apiUrl' => [
+                'description' => 'MediaWiki API URL',
+                'required'    => true,
+                'prefix'      => 'api',
+                'longPrefix'  => 'api-url',
+            ],
+            'username' => [
+                'description' => 'MediaWiki username',
+                'required'    => true,
+                'prefix'      => 'u',
+                'longPrefix'  => 'username',
+            ],
+            'password' => [
+                'description' => 'MediaWiki password',
+                'required'    => true,
+                'prefix'      => 'p',
+                'longPrefix'  => 'password',
+            ],
+            'title' => [
+                'description' => 'E-mail title',
+                'required'    => true,
+                'prefix'      => 't',
+                'longPrefix'  => 'title',
+            ],
+            'namespaces' => [
+                'description' => 'MediaWiki namespaces',
+                'required'    => false,
+                'prefix'      => 'ns',
+                'longPrefix'  => 'namespaces',
+                'castTo'      => 'string',
+            ],
+            'groupby' => [
+                'description' => 'Group recent changes. Possible values : parentheses',
+                'required'    => false,
+                'prefix'      => 'g',
+                'longPrefix'  => 'groupby',
+            ],
+            'nsgroupby' => [
+                'description' => 'Namespaces for which we must group changes',
+                'required'    => false,
+                'prefix'      => 'nsg',
+                'longPrefix'  => 'nsgroupby',
+            ],
+            'debug' => [
+                'description' => 'Output debug info',
+                'noValue'     => true,
+                'prefix'      => 'd',
+                'longPrefix'  => 'debug',
+            ],
+            'target' => [
+                'description' => 'Send email to a specific user',
+                'longPrefix'  => 'target',
+            ],
+        ]
     );
     if ($climate->arguments->get('help')) {
         $climate->usage();
@@ -107,14 +107,14 @@ $siteInfo = $api->getRequest(
     FluentRequest::factory()
         ->setAction('query')
         ->addParams(
-            array(
-                'meta'=>'siteinfo',
-                'siprop'=>'general|namespaces|extensions'
-            )
+            [
+                'meta'   => 'siteinfo',
+                'siprop' => 'general|namespaces|extensions',
+            ]
         )
 );
 
-$changeLists = array();
+$changeLists = [];
 foreach (array_map('intval', explode(',', $params->get('namespaces'))) as $namespace) {
     $endDate = new \DateTime();
     $endDate->sub(new \DateInterval('P1W'));
@@ -122,15 +122,15 @@ foreach (array_map('intval', explode(',', $params->get('namespaces'))) as $names
         FluentRequest::factory()
             ->setAction('query')
             ->addParams(
-                array(
-                    'list'=>'recentchanges',
-                    'rcnamespace'=>$namespace,
-                    'rctype'=>'edit',
-                    'rctoponly'=>true,
-                    'rclimit'=>500,
-                    'rcend'=>$endDate->format('r'),
-                    'rcprop'=>'title|timestamp|ids'
-                )
+                [
+                    'list'        => 'recentchanges',
+                    'rcnamespace' => $namespace,
+                    'rctype'      => 'edit',
+                    'rctoponly'   => true,
+                    'rclimit'     => 500,
+                    'rcend'       => $endDate->format('r'),
+                    'rcprop'      => 'title|timestamp|ids',
+                ]
             )
     );
 
@@ -138,14 +138,14 @@ foreach (array_map('intval', explode(',', $params->get('namespaces'))) as $names
         FluentRequest::factory()
             ->setAction('query')
             ->addParams(
-                array(
-                    'list'=>'recentchanges',
-                    'rcnamespace'=>$namespace,
-                    'rctype'=>'new',
-                    'rclimit'=>500,
-                    'rcend'=>$endDate->format('r'),
-                    'rcprop'=>'title|timestamp|ids'
-                )
+                [
+                    'list'        => 'recentchanges',
+                    'rcnamespace' => $namespace,
+                    'rctype'      => 'new',
+                    'rclimit'     => 500,
+                    'rcend'       => $endDate->format('r'),
+                    'rcprop'      => 'title|timestamp|ids',
+                ]
             )
     );
 
@@ -164,10 +164,10 @@ $users = $api->getRequest(
     FluentRequest::factory()
         ->setAction('query')
         ->addParams(
-            array(
-                'list'=>'allusers',
-                'aulimit'=>5000
-            )
+            [
+                'list'    => 'allusers',
+                'aulimit' => 5000,
+            ]
         )
 );
 
@@ -181,19 +181,19 @@ foreach ($siteInfo['query']['extensions'] as $extension) {
 
 $title = $params->get('title');
 $smarty->assign(
-    array(
-        'changeLists'=>$changeLists,
-        'title'=>$title,
-        'wiki'=>array(
-            'name'=>$siteInfo['query']['general']['sitename'],
-            'url'=>str_replace(
+    [
+        'changeLists' => $changeLists,
+        'title'       => $title,
+        'wiki'        => [
+            'name' => $siteInfo['query']['general']['sitename'],
+            'url'  => str_replace(
                 $siteInfo['query']['general']['mainpage'],
                 '',
                 urldecode($siteInfo['query']['general']['base'])
             ),
-            'lang'=>$siteInfo['query']['general']['lang']
-        )
-    )
+            'lang' => $siteInfo['query']['general']['lang'],
+        ],
+    ]
 );
 
 if (php_sapi_name() == 'apache2handler') {
