@@ -5,6 +5,7 @@ namespace MediawikiMailRecentChanges;
 use Html2Text\Html2Text;
 use Mediawiki\Api\FluentRequest;
 use Mediawiki\Api\MediawikiApi;
+use Mediawiki\Api\UsageException;
 
 class Mailer
 {
@@ -41,16 +42,10 @@ class Mailer
             $this->logger->info('E-mail sent to '.$user);
 
             return true;
-        } catch (\Mediawiki\Api\UsageException $e) {
-            $expectedMessage = 'The user has not specified a valid email address, '.
-                'or has chosen not to receive email from other users';
-            if ($e->getMessage() == $expectedMessage) {
-                $this->logger->error("Can't send e-mail to ".$user);
+        } catch (UsageException $e) {
+            $this->logger->error("Can't send e-mail to ".$user.': '.$e->getMessage());
 
-                return false;
-            } else {
-                throw($e);
-            }
+            return false;
         }
     }
 }
