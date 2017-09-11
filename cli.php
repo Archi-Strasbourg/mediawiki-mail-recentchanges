@@ -9,6 +9,9 @@ use Mediawiki\Api\MediawikiApi;
 
 require_once __DIR__.'/vendor/autoload.php';
 
+//Required on servers that don't have a default timezone in PHP settings
+date_default_timezone_set('Europe/Paris');
+
 $smarty = new \Smarty();
 $climate = new CLImate();
 $params = new ParameterManager($climate);
