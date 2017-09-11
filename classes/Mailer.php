@@ -25,6 +25,7 @@ class Mailer
     public function send($user, $html, $title)
     {
         $plaintext = new Html2Text($html);
+
         try {
             $this->api->postRequest(
                 FluentRequest::factory()
