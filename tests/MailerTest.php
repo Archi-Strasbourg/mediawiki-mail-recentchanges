@@ -58,9 +58,6 @@ class MailerTest extends \PHPUnit_Framework_TestCase
         );
     }
 
-    /**
-     * @expectedException Mediawiki\Api\UsageException
-     */
     public function testSendWithRealApi()
     {
         $mailer = new Mailer(
