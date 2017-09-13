@@ -187,13 +187,19 @@ foreach ($siteInfo['query']['extensions'] as $extension) {
     }
 }
 
-$title = $params->get('title');
+$logger = new Logger($climate);
 $services = new MediawikiFactory($api);
-$introPage = $params->get('intro');
-if (isset($introPage)) {
-    $intro = $services->newPageGetter()->getFromTitle($introPage)->getRevisions()->getLatest()->getContent()->getData();
-} else {
-    $intro = '';
+
+$title = $params->get('title');
+$introTitle = $params->get('intro');
+$intro = '';
+if (isset($introTitle)) {
+    $introPage = $services->newPageGetter()->getFromTitle($introTitle);
+    if ($introPage->getPageIdentifier()->getId() == 0) {
+        $logger->error('Could not find intro page');
+    } else {
+        $intro = $introPage->getRevisions()->getLatest()->getContent()->getData();
+    }
 }
 
 $smarty->assign(
@@ -218,7 +224,7 @@ if (php_sapi_name() == 'apache2handler') {
 } else {
     $html = $smarty->fetch('mail.tpl');
     $target = $params->get('target');
-    $mailer = new Mailer($api, $emailApiName, new Logger($climate));
+    $mailer = new Mailer($api, $emailApiName, $logger);
     if (isset($target)) {
         $mailer->send($target, $html, $title);
     } else {
