@@ -191,7 +191,7 @@ $title = $params->get('title');
 $services = new MediawikiFactory($api);
 $introPage = $params->get('intro');
 if (isset($introPage)) {
-    $intro = $services->newPageGetter()->getFromTitle()->getRevisions()->getLatest()->getContent()->getData();
+    $intro = $services->newPageGetter()->getFromTitle($introPage)->getRevisions()->getLatest()->getContent()->getData();
 } else {
     $intro = '';
 }
