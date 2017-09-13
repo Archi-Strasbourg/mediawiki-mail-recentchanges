@@ -7,7 +7,6 @@ use Mediawiki\Api\ApiUser;
 use Mediawiki\Api\FluentRequest;
 use Mediawiki\Api\MediawikiApi;
 use Mediawiki\Api\MediawikiFactory;
-use Mediawiki\DataModel\Revision;
 
 require_once __DIR__.'/vendor/autoload.php';
 
@@ -88,8 +87,8 @@ if (php_sapi_name() == 'cli') {
             ],
             'intro' => [
                 'description' => 'Intro text',
-                'longPrefix'  => 'intro'
-            ]
+                'longPrefix'  => 'intro',
+            ],
         ]
     );
     if ($climate->arguments->get('help')) {
