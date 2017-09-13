@@ -7,8 +7,10 @@
     <body>
         <p>
             Bonjour,<br/>
-            Voici les pages qui ont été créées ou modifiées cette semaine sur <a href="{$wiki.url}" target="_blank">{$wiki.name}</a>&nbsp;:
+            Voici les pages qui ont été créées ou modifiées cette semaine sur <a href="{$wiki.url}" target="_blank">{$wiki.name}</a>.
         </p>
+
+        <p>{$intro}</p>
 
         {foreach $changeLists as $namespace=>$recentChanges}
             {foreach $recentChanges as $groupName=>$group}

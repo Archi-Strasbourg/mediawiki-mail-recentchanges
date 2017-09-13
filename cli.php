@@ -6,6 +6,8 @@ use League\CLImate\CLImate;
 use Mediawiki\Api\ApiUser;
 use Mediawiki\Api\FluentRequest;
 use Mediawiki\Api\MediawikiApi;
+use Mediawiki\Api\MediawikiFactory;
+use Mediawiki\DataModel\Revision;
 
 require_once __DIR__.'/vendor/autoload.php';
 
@@ -84,6 +86,10 @@ if (php_sapi_name() == 'cli') {
                 'description' => 'Send email to a specific user',
                 'longPrefix'  => 'target',
             ],
+            'intro' => [
+                'description' => 'Intro text',
+                'longPrefix'  => 'intro'
+            ]
         ]
     );
     if ($climate->arguments->get('help')) {
@@ -183,10 +189,19 @@ foreach ($siteInfo['query']['extensions'] as $extension) {
 }
 
 $title = $params->get('title');
+$services = new MediawikiFactory($api);
+$introPage = $params->get('intro');
+if (isset($introPage)) {
+    $intro = $services->newPageGetter()->getFromTitle()->getRevisions()->getLatest()->getContent()->getData();
+} else {
+    $intro = '';
+}
+
 $smarty->assign(
     [
         'changeLists' => $changeLists,
         'title'       => $title,
+        'intro'       => $intro,
         'wiki'        => [
             'name' => $siteInfo['query']['general']['sitename'],
             'url'  => str_replace(
