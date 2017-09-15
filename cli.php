@@ -192,6 +192,12 @@ foreach ($siteInfo['query']['extensions'] as $extension) {
 $logger = new Logger($climate);
 $services = new MediawikiFactory($api);
 
+$baseUrl = str_replace(
+    $siteInfo['query']['general']['mainpage'],
+    '',
+    urldecode($siteInfo['query']['general']['base'])
+);
+
 $title = $params->get('title');
 $introTitle = $params->get('intro');
 $intro = '';
@@ -201,7 +207,7 @@ if (isset($introTitle)) {
         $logger->error('Could not find intro page');
     } else {
         $introParsed = $services->newParser()->parsePage($introPage->getPageIdentifier());
-        $intro = str_replace('href="/', 'href="http://archi-wiki.org/', $introParsed['text']['*']);
+        $intro = str_replace('href="/', 'href="'.$baseUrl, $introParsed['text']['*']);
     }
 }
 
@@ -212,11 +218,7 @@ $smarty->assign(
         'intro'       => $intro,
         'wiki'        => [
             'name' => $siteInfo['query']['general']['sitename'],
-            'url'  => str_replace(
-                $siteInfo['query']['general']['mainpage'],
-                '',
-                urldecode($siteInfo['query']['general']['base'])
-            ),
+            'url'  => $baseUrl,
             'lang' => $siteInfo['query']['general']['lang'],
         ],
     ]
