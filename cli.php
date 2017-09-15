@@ -200,7 +200,8 @@ if (isset($introTitle)) {
     if ($introPage->getPageIdentifier()->getId() == 0) {
         $logger->error('Could not find intro page');
     } else {
-        $intro = $introPage->getRevisions()->getLatest()->getContent()->getData();
+        $introParsed = $services->newParser()->parsePage($introPage->getPageIdentifier());
+        $intro = str_replace('href="/', 'href="http://archi-wiki.org/', $introParsed['text']['*']);
     }
 }
 
