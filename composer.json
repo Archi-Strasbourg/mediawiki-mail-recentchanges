@@ -1,0 +1,23 @@
+{
+  "name": "archi-strasbourg/mediawiki-mail-recentchanges",
+  "description": "Send recent changes to every user of your wiki",
+  "license": "GPL-3.0",
+  "require": {
+    "league/climate": "~3.2.1",
+    "addwiki/mediawiki-api-base": "~2.2.0",
+    "addwiki/mediawiki-api": "~0.7.1",
+    "psr/log": "~1.0.0",
+    "smarty/smarty": "~3.1.29",
+    "html2text/html2text": "~4.0.1"
+  },
+  "require-dev": {
+    "symfony/var-dumper": "~3.1.2",
+    "squizlabs/php_codesniffer": "~2.8.1",
+    "phpunit/phpunit": "~5.5.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "MediawikiMailRecentChanges\\": "classes/"
+    }
+  }
+}
