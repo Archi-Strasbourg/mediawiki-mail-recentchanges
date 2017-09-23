@@ -140,6 +140,7 @@ foreach (array_map('intval', explode(',', $params->get('namespaces'))) as $names
                     'rclimit'     => 500,
                     'rcend'       => $endDate->format('r'),
                     'rcprop'      => 'title|timestamp|ids',
+                    'rcshow'      => '!bot',
                 ]
             )
     );
