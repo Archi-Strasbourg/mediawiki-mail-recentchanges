@@ -1,7 +1,7 @@
 {
   "name": "mediawiki-mail-recentchanges",
   "description": "Send recent changes to every user of your wiki",
-  "version": "0.1.0",
+  "version": "1.0.1",
   "author": "Pierre Rudloff",
   "bugs": "https://github.com/Archi-Strasbourg/mediawiki-mail-recentchanges/issues",
   "devDependencies": {
