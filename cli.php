@@ -107,6 +107,7 @@ if (!isset($apiUrl)) {
 }
 
 $api = MediawikiApi::newFromApiEndpoint($apiUrl);
+
 try {
     $api->login(
         new ApiUser(
