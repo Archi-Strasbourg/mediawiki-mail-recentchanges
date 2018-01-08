@@ -116,7 +116,11 @@ try {
     );
 } catch (UsageException $e) {
     $result = $e->getApiResult();
-    throw new \Exception($result['login']['reason']);
+    if (isset($result['login']['reason'])) {
+        throw new \Exception($result['login']['reason']);
+    } else {
+        throw $e;
+    }
 }
 
 $siteInfo = $api->getRequest(
