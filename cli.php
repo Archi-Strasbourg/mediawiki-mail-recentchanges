@@ -7,6 +7,7 @@ use Mediawiki\Api\ApiUser;
 use Mediawiki\Api\FluentRequest;
 use Mediawiki\Api\MediawikiApi;
 use Mediawiki\Api\MediawikiFactory;
+use Mediawiki\Api\UsageException;
 
 require_once __DIR__.'/vendor/autoload.php';
 
@@ -106,12 +107,17 @@ if (!isset($apiUrl)) {
 }
 
 $api = MediawikiApi::newFromApiEndpoint($apiUrl);
-$api->login(
-    new ApiUser(
-        $params->get('username'),
-        $params->get('password')
-    )
-);
+try {
+    $api->login(
+        new ApiUser(
+            $params->get('username'),
+            $params->get('password')
+        )
+    );
+} catch (UsageException $e) {
+    $result = $e->getApiResult();
+    throw new \Exception($result['login']['reason']);
+}
 
 $siteInfo = $api->getRequest(
     FluentRequest::factory()
