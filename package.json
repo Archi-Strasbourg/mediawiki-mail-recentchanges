@@ -19,7 +19,7 @@
     "recent changes"
   ],
   "license": "GPL-3.0",
-  "main": "cli.php",
+  "main": "Gruntfile.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/Archi-Strasbourg/mediawiki-mail-recentchanges.git"
