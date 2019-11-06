@@ -178,6 +178,7 @@ $users = $api->getRequest(
             [
                 'list'    => 'allusers',
                 'aulimit' => 5000,
+                'auprop'  => 'blockinfo'
             ]
         )
 );
@@ -235,7 +236,9 @@ if (php_sapi_name() == 'apache2handler') {
         $mailer->send($target, $html, $title);
     } else {
         foreach ($users['query']['allusers'] as $user) {
-            $mailer->send($user['name'], $html, $title);
+            if (!isset($user['blockid'])) {
+                $mailer->send($user['name'], $html, $title);
+            }
         }
     }
 }
