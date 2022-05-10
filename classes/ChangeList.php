@@ -26,7 +26,7 @@ class ChangeList
         $return = [];
         foreach ($this->edits as $change) {
             if ($groupBy == 'parentheses') {
-                preg_match('/ \([^\)]*\)$/', $change['title'], $match);
+                preg_match('/ \([^)]*\)$/', $change['title'], $match);
                 if (isset($match[0])) {
                     $change['shortTitle'] = str_replace($match[0], '', $change['title']);
                     $return[trim($match[0], ' ()')]['edit'][] = $change;
@@ -41,7 +41,7 @@ class ChangeList
         foreach ($this->newArticles as $change) {
             if (!in_array($change['title'], $newArticleTitles)) {
                 if ($groupBy == 'parentheses') {
-                    preg_match('/ \([^\)]*\)$/', $change['title'], $match);
+                    preg_match('/ \([^)]*\)$/', $change['title'], $match);
                     if (isset($match[0])) {
                         $change['shortTitle'] = str_replace($match[0], '', $change['title']);
                         $return[trim($match[0], ' ()')]['new'][] = $change;
