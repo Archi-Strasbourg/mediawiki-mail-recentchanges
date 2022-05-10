@@ -21,6 +21,20 @@ class ChangeList
         }
     }
 
+    /**
+     * @param array $a
+     * @param array $b
+     * @return int
+     */
+    private function sortByStreet(array $a, array $b)
+    {
+        return strnatcasecmp($a['shortTitle'], $b['shortTitle']);
+    }
+
+    /**
+     * @param string $groupBy
+     * @return array
+     */
     public function getAll($groupBy = '')
     {
         $return = [];
@@ -51,6 +65,12 @@ class ChangeList
                     $return['*']['new'][] = $change;
                 }
                 $newArticleTitles[] = $change['title'];
+            }
+        }
+
+        foreach ($return as $i => $group) {
+            foreach ($group as $j => $subgroup) {
+                usort($return[$i][$j], [$this, 'sortByStreet']);
             }
         }
 
