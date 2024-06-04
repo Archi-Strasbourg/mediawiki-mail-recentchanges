@@ -8,7 +8,7 @@
     "addwiki/mediawiki-api-base": "~2.2.0",
     "addwiki/mediawiki-api": "~0.7.1",
     "psr/log": "~1.0.0",
-    "smarty/smarty": "^3.1",
+    "smarty/smarty": "^4.5",
     "html2text/html2text": "~4.0.1"
   },
   "require-dev": {
