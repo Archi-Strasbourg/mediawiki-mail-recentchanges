@@ -1,17 +1,28 @@
 <?php
 
+
 namespace MediawikiMailRecentChanges;
+
+
 
 use League\CLImate\CLImate;
 use Mediawiki\Api\ApiUser;
 use Mediawiki\Api\FluentRequest;
 use Mediawiki\Api\MediawikiApi;
 use Mediawiki\Api\MediawikiFactory;
+use Mediawiki\Api\UsageException;
+use DateTime;
+use Exception;
+use User;
 
 require_once __DIR__.'/vendor/autoload.php';
 
+
+
 //Required on servers that don't have a default timezone in PHP settings
 date_default_timezone_set('Europe/Paris');
+
+
 
 $smarty = new \Smarty();
 $smarty->setTemplateDir(__DIR__.'/templates/');
@@ -102,16 +113,23 @@ if (php_sapi_name() == 'cli') {
 
 $apiUrl = $params->get('apiUrl');
 if (!isset($apiUrl)) {
+    echo 'no api url';
     throw new \Exception('Missing API URL');
 }
 
 $api = MediawikiApi::newFromApiEndpoint($apiUrl);
-$api->login(
+try{
+    $api->login(
     new ApiUser(
         $params->get('username'),
         $params->get('password')
     )
-);
+    );
+} catch (UsageException $e) {
+    echo "login : ".$e->getMessage();
+    die;
+}
+
 
 $siteInfo = $api->getRequest(
     FluentRequest::factory()
@@ -139,7 +157,7 @@ foreach (array_map('intval', explode(',', $params->get('namespaces'))) as $names
                     'rctoponly'   => true,
                     'rclimit'     => 500,
                     'rcend'       => $endDate->format('r'),
-                    'rcprop'      => 'title|timestamp|ids',
+                    'rcprop'      => 'title|timestamp|ids|sizes',
                     'rcshow'      => '!bot',
                 ]
             )
@@ -155,12 +173,13 @@ foreach (array_map('intval', explode(',', $params->get('namespaces'))) as $names
                     'rctype'      => 'new',
                     'rclimit'     => 500,
                     'rcend'       => $endDate->format('r'),
-                    'rcprop'      => 'title|timestamp|ids',
+                    'rcprop'      => 'title|timestamp|ids|sizes',
                 ]
             )
     );
 
     $changeList = new ChangeList($recentChanges['query']['recentchanges'], $newArticles['query']['recentchanges']);
+
     if ($namespace == 0) {
         $changeLists[null] = $changeList->getAll();
     } elseif (in_array($namespace, explode(',', $params->get('nsgroupby')))) {
@@ -170,6 +189,8 @@ foreach (array_map('intval', explode(',', $params->get('namespaces'))) as $names
         $changeLists[$siteInfo['query']['namespaces'][$namespace]['canonical']] = $changeList->getAll();
     }
 }
+
+
 
 $users = $api->getRequest(
     FluentRequest::factory()
@@ -213,6 +234,89 @@ if (isset($introTitle)) {
     }
 }
 
+//this is for removing the last br that is useless and is always present in $intro because of the {{Alerte hebdo}} call in the alerts
+$BRcount=1;
+$BRcountTotal=substr_count($intro, '<br />');
+$BRcountTotal+=substr_count($intro, '<br/>');
+$BRcountTotal+=substr_count($intro, '<br>');
+function test($test){
+    global $BRcount;
+    global $BRcountTotal;
+    if($BRcount==$BRcountTotal){
+        $test[0]='';
+    }
+    $BRcount++;
+    return $test[0];	
+
+}
+$intro = preg_replace_callback('/<br\s*\/?>/', 'MediawikiMailRecentChanges\test', $intro);
+
+
+
+
+foreach($changeLists['Adresse'] as &$ville){
+    foreach($ville['edit'] as &$adresse){
+        $categories = $api->getRequest(
+            FluentRequest::factory()
+                ->setAction('query')
+                ->addParams(
+                    [
+                        'prop' => 'archiCategoryTree',
+                        'titles' => $adresse['title']
+                    ]
+                )
+        );
+
+        foreach($categories['query']['pages'] as $page){
+            $categories = array_reverse($page['categories']);
+            if(isset($categories[2])){
+                $colonIndex = strpos($categories[2], ':');
+                $parenthesisIndex = strrpos($categories[2], '_(');
+                $adresse['quartier'] = substr($categories[2], $colonIndex + 1, $parenthesisIndex - $colonIndex - 1);
+            }
+            if(isset($categories[3])  && !(substr($categories[3], strpos($categories[3], ':')+1, 5) === 'Autre')){
+                $colonIndex = strpos($categories[3], ':');
+                $parenthesisIndex = strpos($categories[3], '_('.$adresse['quartier']);
+                $adresse['quartier'] .= ' > '.substr($categories[3], $colonIndex + 1, $parenthesisIndex - $colonIndex - 1);
+            }
+            if(isset($adresse['quartier'])){
+                $adresse['quartier'] = str_replace('_', ' ', $adresse['quartier']);
+                $adresse['quartier'] = html_entity_decode(preg_replace('/\\\\u([\da-fA-F]{4})/', '&#x$1;', $adresse['quartier']));
+            }
+        }
+    }
+    unset($adresse);
+    foreach($ville['new'] as &$adresse){
+        $categories = $api->getRequest(
+            FluentRequest::factory()
+                ->setAction('query')
+                ->addParams(
+                    [
+                        'prop' => 'archiCategoryTree',
+                        'titles' => $adresse['title']
+                    ]
+                )
+        );
+        
+        foreach($categories['query']['pages'] as $page){
+            $categories = array_reverse($page['categories']);
+            
+            if(isset($categories[2])){
+                $colonIndex = strpos($categories[2], ':');
+                $parenthesisIndex = strrpos($categories[2], '_(');
+                $adresse['quartier'] = substr($categories[2], $colonIndex + 1, $parenthesisIndex - $colonIndex - 1);
+            }
+            if(isset($categories[3])  && !(substr($categories[3], strpos($categories[3], ':')+1, 5) === 'Autre')){
+                $colonIndex = strpos($categories[3], ':');
+                $parenthesisIndex = strpos($categories[3], '_('.$adresse['quartier']);
+                $adresse['quartier'] .= ' > '.substr($categories[3], $colonIndex + 1, $parenthesisIndex - $colonIndex - 1);
+            }
+        }
+    }
+    unset($adresse);
+}
+unset($ville); 
+
 $smarty->assign(
     [
         'changeLists' => $changeLists,
@@ -242,3 +346,5 @@ if (php_sapi_name() == 'apache2handler') {
         }
     }
 }
+
+echo "success";
