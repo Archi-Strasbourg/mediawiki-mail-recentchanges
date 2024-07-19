@@ -255,65 +255,181 @@ $intro = preg_replace_callback('/<br\s*\/?>/', 'MediawikiMailRecentChanges\test'
 
 
 foreach($changeLists['Adresse'] as &$ville){
-    foreach($ville['edit'] as &$adresse){
-        $categories = $api->getRequest(
+    $biggestChangeNum=-99999;
+    $biggestChange='fail';
+    if(isset($ville['edit'])){
+        foreach($ville['edit'] as &$adresse){
+            if($adresse['newlen']-$adresse['oldlen']>$biggestChangeNum){
+                $biggestChangeNum=$adresse['newlen']-$adresse['oldlen'];
+                $biggestChange=$adresse['title'];
+            }
+            $categories = $api->getRequest(
+                FluentRequest::factory()
+                    ->setAction('query')
+                    ->addParams(
+                        [
+                            'prop' => 'archiCategoryTree',
+                            'titles' => $adresse['title']
+                        ]
+                    )
+            );
+
+            foreach($categories['query']['pages'] as $page){
+                $categories = array_reverse($page['categories']);
+                if(isset($categories[2])){
+                    $colonIndex = strpos($categories[2], ':');
+                    $parenthesisIndex = strrpos($categories[2], '_(');
+                    $adresse['quartier'] = substr($categories[2], $colonIndex + 1, $parenthesisIndex - $colonIndex - 1);
+                }
+                if(isset($categories[3])  && !(substr($categories[3], strpos($categories[3], ':')+1, 5) === 'Autre')){
+                    $colonIndex = strpos($categories[3], ':');
+                    $parenthesisIndex = strpos($categories[3], '_('.$adresse['quartier']);
+                    $adresse['quartier'] .= ' > '.substr($categories[3], $colonIndex + 1, $parenthesisIndex - $colonIndex - 1);
+                }
+                if(isset($adresse['quartier'])){
+                    $adresse['quartier'] = str_replace('_', ' ', $adresse['quartier']);
+                    $adresse['quartier'] = html_entity_decode(preg_replace('/\\\\u([\da-fA-F]{4})/', '&#x$1;', $adresse['quartier']));
+                }
+            }
+        }
+        unset($adresse);
+    }
+    if(isset($ville['new'])){
+        foreach($ville['new'] as &$adresse){
+            if($adresse['newlen']-$adresse['oldlen']>$biggestChangeNum){
+                $biggestChangeNum=$adresse['newlen']-$adresse['oldlen'];
+                $biggestChange=$adresse['title'];
+            }
+            $categories = $api->getRequest(
+                FluentRequest::factory()
+                    ->setAction('query')
+                    ->addParams(
+                        [
+                            'prop' => 'archiCategoryTree',
+                            'titles' => $adresse['title']
+                        ]
+                    )
+            );
+
+            foreach($categories['query']['pages'] as $page){
+                $categories = array_reverse($page['categories']);
+
+                if(isset($categories[2])){
+                    $colonIndex = strpos($categories[2], ':');
+                    $parenthesisIndex = strrpos($categories[2], '_(');
+                    $adresse['quartier'] = substr($categories[2], $colonIndex + 1, $parenthesisIndex - $colonIndex - 1);
+                }
+                if(isset($categories[3])  && !(substr($categories[3], strpos($categories[3], ':')+1, 5) === 'Autre')){
+                    $colonIndex = strpos($categories[3], ':');
+                    $parenthesisIndex = strpos($categories[3], '_('.$adresse['quartier']);
+                    $adresse['quartier'] .= ' > '.substr($categories[3], $colonIndex + 1, $parenthesisIndex - $colonIndex - 1);
+                }
+            }
+        }
+        unset($adresse);
+    }
+    if($biggestChange!='fail'){
+        $image = $api->getRequest(
             FluentRequest::factory()
-                ->setAction('query')
+                ->setAction('ask')
                 ->addParams(
                     [
-                        'prop' => 'archiCategoryTree',
-                        'titles' => $adresse['title']
+                        'query' => '[['.$biggestChange.']]|?Image principale|limit=1'
                     ]
                 )
         );
 
-        foreach($categories['query']['pages'] as $page){
-            $categories = array_reverse($page['categories']);
-            if(isset($categories[2])){
-                $colonIndex = strpos($categories[2], ':');
-                $parenthesisIndex = strrpos($categories[2], '_(');
-                $adresse['quartier'] = substr($categories[2], $colonIndex + 1, $parenthesisIndex - $colonIndex - 1);
-            }
-            if(isset($categories[3])  && !(substr($categories[3], strpos($categories[3], ':')+1, 5) === 'Autre')){
-                $colonIndex = strpos($categories[3], ':');
-                $parenthesisIndex = strpos($categories[3], '_('.$adresse['quartier']);
-                $adresse['quartier'] .= ' > '.substr($categories[3], $colonIndex + 1, $parenthesisIndex - $colonIndex - 1);
-            }
-            if(isset($adresse['quartier'])){
-                $adresse['quartier'] = str_replace('_', ' ', $adresse['quartier']);
-                $adresse['quartier'] = html_entity_decode(preg_replace('/\\\\u([\da-fA-F]{4})/', '&#x$1;', $adresse['quartier']));
-            }
-        }
-    }
-    unset($adresse);
-    foreach($ville['new'] as &$adresse){
-        $categories = $api->getRequest(
+        $image= $image['query']['results'][array_keys($image['query']['results'])[0]]['printouts']['Image principale'][0]['fulltext'];
+        $image=$api->getRequest(
             FluentRequest::factory()
-                ->setAction('query')
+                ->setAction('parse')
                 ->addParams(
                     [
-                        'prop' => 'archiCategoryTree',
-                        'titles' => $adresse['title']
+                        'text' => '[['.$image.']]'
                     ]
                 )
         );
-        
-        foreach($categories['query']['pages'] as $page){
-            $categories = array_reverse($page['categories']);
-            
-            if(isset($categories[2])){
-                $colonIndex = strpos($categories[2], ':');
-                $parenthesisIndex = strrpos($categories[2], '_(');
-                $adresse['quartier'] = substr($categories[2], $colonIndex + 1, $parenthesisIndex - $colonIndex - 1);
+        $image=$image['parse']['text']['*'];
+        if(strpos($image,'Image-manquante')==false){
+            $imageSource = '';
+            preg_match('/src="([^"]+)"/', $image, $matches);
+            if (isset($matches[1])) {
+                $imageSource = $matches[1];
             }
-            if(isset($categories[3])  && !(substr($categories[3], strpos($categories[3], ':')+1, 5) === 'Autre')){
-                $colonIndex = strpos($categories[3], ':');
-                $parenthesisIndex = strpos($categories[3], '_('.$adresse['quartier']);
-                $adresse['quartier'] .= ' > '.substr($categories[3], $colonIndex + 1, $parenthesisIndex - $colonIndex - 1);
+            if(substr($imageSource, 0, 4) === 'http'){
+                $ville['image'] = $imageSource;
+                $ville['biggestChange'] = $biggestChange;
+            } else {
+                $ville['image'] = $baseUrl.$imageSource;
+                $ville['biggestChange'] = $biggestChange;
             }
         }
     }
-    unset($adresse);
+}
+unset($ville); 
+
+//do the biggest change for Personne
+foreach($changeLists['Personne'] as &$Personne){
+    $biggestChangeNum=-99999;
+    $biggestChange='fail';
+    if(isset($Personne['edit'])){
+        foreach($Personne['edit'] as &$adresse){
+            if($adresse['newlen']-$adresse['oldlen']>$biggestChangeNum){
+                $biggestChangeNum=$adresse['newlen']-$adresse['oldlen'];
+                $biggestChange=$adresse['title'];
+            }
+        }
+        unset($adresse);
+    }
+    if(isset($Personne['new'])){
+        foreach($Personne['new'] as &$adresse){
+            if($adresse['newlen']-$adresse['oldlen']>$biggestChangeNum){
+                $biggestChangeNum=$adresse['newlen']-$adresse['oldlen'];
+                $biggestChange=$adresse['title'];
+            }
+        }
+        unset($adresse);
+    }
+    if($biggestChange!='fail'){
+        $image = $api->getRequest(
+            FluentRequest::factory()
+                ->setAction('ask')
+                ->addParams(
+                    [
+                        'query' => '[['.$biggestChange.']]|?Image principale|limit=1'
+                    ]
+                )
+        );
+        if(empty($image['query']['results'][array_keys($image['query']['results'])[0]]['printouts']['Image principale'])) {
+            echo "no image found for ".$biggestChange."\n";
+        } else {
+            $image= $image['query']['results'][array_keys($image['query']['results'])[0]]['printouts']['Image principale'][0]['fulltext'];
+            $image=$api->getRequest(
+                FluentRequest::factory()
+                    ->setAction('parse')
+                    ->addParams(
+                        [
+                            'text' => '[['.$image.']]'
+                        ]
+                    )
+            );
+            $image=$image['parse']['text']['*'];
+            $imageSource = '';
+            if(strpos($image, 'Image-manquante')==false){
+                preg_match('/src="([^"]+)"/', $image, $matches);
+                if (isset($matches[1])) {
+                    $imageSource = $matches[1];
+                }
+                if(substr($imageSource, 0, 4) === 'http'){
+                    $Personne['image'] = $imageSource;
+                    $Personne['biggestChange'] = $biggestChange;
+                } else {
+                    $Personne['image'] = $baseUrl.$imageSource;
+                    $Personne['biggestChange'] = $biggestChange;
+                }
+            }
+        }
+    }
 }
 unset($ville); 
 
