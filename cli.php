@@ -141,45 +141,62 @@ $siteInfo = $api->getRequest(
             ]
         )
 );
+function findInArray($array, $id)
+{
+    foreach ($array as $i => $item) {
+        if ($item['pageid'] == $id) {
+            return $i;
+        }
+    }
+    return -1;
+}
 
 $changeLists = [];
 foreach (array_map('intval', explode(',', $params->get('namespaces'))) as $namespace) {
     $endDate = new \DateTime();
     $endDate->sub(new \DateInterval('P1W'));
-    $recentChanges = $api->getRequest(
+    $recentChangesTMP = $api->getRequest(
         FluentRequest::factory()
             ->setAction('query')
             ->addParams(
                 [
                     'list'        => 'recentchanges',
                     'rcnamespace' => $namespace,
-                    'rctype'      => 'edit',
-                    'rctoponly'   => true,
-                    'rclimit'     => 500,
-                    'rcend'       => $endDate->format('r'),
+                    'rctype'      => 'edit|new',
+                    'rcdir'       => 'newer',
+                    'rclimit'     => 1000,
+                    'rcstart'       => $endDate->format('r'),
                     'rcprop'      => 'title|timestamp|ids|sizes',
                     'rcshow'      => '!bot',
                 ]
             )
     );
 
-    $newArticles = $api->getRequest(
-        FluentRequest::factory()
-            ->setAction('query')
-            ->addParams(
-                [
-                    'list'        => 'recentchanges',
-                    'rcnamespace' => $namespace,
-                    'rctype'      => 'new',
-                    'rclimit'     => 500,
-                    'rcend'       => $endDate->format('r'),
-                    'rcprop'      => 'title|timestamp|ids|sizes',
-                ]
-            )
-    );
+    //cumule les changements par page et répartie les nouveaux articles et les modifications
+    $recentChanges =[];
+    $newArticles=[];
+    $newArticles['query']['recentchanges']=[];
+    $recentChanges['query']['recentchanges']=[];
+    foreach($recentChangesTMP['query']['recentchanges'] as $change){
+        
+        $indice=findInArray($recentChanges['query']['recentchanges'], $change['pageid']);
+        if($indice==-1){
+            $indice2=findInArray($newArticles['query']['recentchanges'], $change['pageid']);
+            if($indice2==-1 && $change['type']=='new'){
+                $newArticles['query']['recentchanges'][] = $change;
+            } else if ($indice2==-1){
+                $recentChanges['query']['recentchanges'][] = $change;
+            } else {
+                $newArticles['query']['recentchanges'][$indice2]['newlen'] = $change['newlen'];
+            }
+        } else {
+            $recentChanges['query']['recentchanges'][$indice]['newlen'] = $change['newlen'];
+        }
+    }
 
     $changeList = new ChangeList($recentChanges['query']['recentchanges'], $newArticles['query']['recentchanges']);
 
+    
     if ($namespace == 0) {
         $changeLists[null] = $changeList->getAll();
     } elseif (in_array($namespace, explode(',', $params->get('nsgroupby')))) {
@@ -188,6 +205,7 @@ foreach (array_map('intval', explode(',', $params->get('namespaces'))) as $names
     } else {
         $changeLists[$siteInfo['query']['namespaces'][$namespace]['canonical']] = $changeList->getAll();
     }
+
 }
 
 
@@ -277,19 +295,18 @@ foreach($changeLists['Adresse'] as &$ville){
             foreach($categories['query']['pages'] as $page){
                 $categories = array_reverse($page['categories']);
                 if(isset($categories[2])){
-                    $colonIndex = strpos($categories[2], ':');
-                    $parenthesisIndex = strrpos($categories[2], '_(');
-                    $adresse['quartier'] = substr($categories[2], $colonIndex + 1, $parenthesisIndex - $colonIndex - 1);
+                    if (($categories[2] != $categories[0]) && ($categories[2] != $categories[1])) {
+                        $colonIndex = strpos($categories[2], ':');
+                        $parenthesisIndex = strrpos($categories[2], '_('.substr($categories[1], strpos($categories[1], ':')+1));
+                        $adresse['quartier'] = substr($categories[2], $colonIndex + 1, $parenthesisIndex - $colonIndex - 1);
+                    } else if (isset($categories[4]) && ($categories[2] == $categories[0])){
+                        $colonIndex = strpos($categories[4], ':');
+                        $parenthesisIndex = strrpos($categories[4], '_('.substr($categories[3], strpos($categories[3], ':')+1));
+                        $adresse['quartier'] = substr($categories[4], $colonIndex + 1, $parenthesisIndex - $colonIndex - 1);
+                    } 
+
                 }
-                if(isset($categories[3])  && !(substr($categories[3], strpos($categories[3], ':')+1, 5) === 'Autre')){
-                    $colonIndex = strpos($categories[3], ':');
-                    $parenthesisIndex = strpos($categories[3], '_('.$adresse['quartier']);
-                    $adresse['quartier'] .= ' > '.substr($categories[3], $colonIndex + 1, $parenthesisIndex - $colonIndex - 1);
-                }
-                if(isset($adresse['quartier'])){
-                    $adresse['quartier'] = str_replace('_', ' ', $adresse['quartier']);
-                    $adresse['quartier'] = html_entity_decode(preg_replace('/\\\\u([\da-fA-F]{4})/', '&#x$1;', $adresse['quartier']));
-                }
+                    
             }
         }
         unset($adresse);
@@ -313,16 +330,17 @@ foreach($changeLists['Adresse'] as &$ville){
 
             foreach($categories['query']['pages'] as $page){
                 $categories = array_reverse($page['categories']);
-
                 if(isset($categories[2])){
-                    $colonIndex = strpos($categories[2], ':');
-                    $parenthesisIndex = strrpos($categories[2], '_(');
-                    $adresse['quartier'] = substr($categories[2], $colonIndex + 1, $parenthesisIndex - $colonIndex - 1);
-                }
-                if(isset($categories[3])  && !(substr($categories[3], strpos($categories[3], ':')+1, 5) === 'Autre')){
-                    $colonIndex = strpos($categories[3], ':');
-                    $parenthesisIndex = strpos($categories[3], '_('.$adresse['quartier']);
-                    $adresse['quartier'] .= ' > '.substr($categories[3], $colonIndex + 1, $parenthesisIndex - $colonIndex - 1);
+                    if (($categories[2] != $categories[0]) && ($categories[2] != $categories[1])) {
+                        $colonIndex = strpos($categories[2], ':');
+                        $parenthesisIndex = strrpos($categories[2], '_('.substr($categories[1], strpos($categories[1], ':')+1));
+                        $adresse['quartier'] = substr($categories[2], $colonIndex + 1, $parenthesisIndex - $colonIndex - 1);
+                    } else if (isset($categories[4]) && ($categories[2] == $categories[0])){
+                        $colonIndex = strpos($categories[4], ':');
+                        $parenthesisIndex = strrpos($categories[4], '_('.substr($categories[1], strpos($categories[3], ':')+1));
+                        $adresse['quartier'] = substr($categories[4], $colonIndex + 1, $parenthesisIndex - $colonIndex - 1);
+                    } 
+
                 }
             }
         }
