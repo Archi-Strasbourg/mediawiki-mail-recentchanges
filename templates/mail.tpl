@@ -58,5 +58,5 @@
                 </tr></table>
             {/foreach}
         {/foreach}
-        <p>Pour ne plus recevoir les alertes mail, il vous suffit de vous connecter à votre profil <a href="{$wiki.url}Spécial:Préférences" target="_blank">{$wiki.name}</a>.</p>
+        <p>Pour ne plus recevoir les alertes mail, il vous suffit de vous rendre sur <a href="{$wiki.url}DésinscriptionAlerteMail" target="_blank">cette page</a>.</p>
 </body>

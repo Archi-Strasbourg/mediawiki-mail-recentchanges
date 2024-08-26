@@ -217,7 +217,8 @@ $users = $api->getRequest(
             [
                 'list'    => 'allusers',
                 'aulimit' => 5000,
-                'auprop'  => 'blockinfo'
+                'auprop'  => 'blockinfo',
+                'auexcludegroup' => 'noAlerteMail'
             ]
         )
 );
@@ -363,7 +364,7 @@ foreach($changeLists['Adresse'] as &$ville){
                 ->setAction('parse')
                 ->addParams(
                     [
-                        'text' => '[['.$image.']]'
+                        'text' => '[['.$image.'|x250px]]'
                     ]
                 )
         );
