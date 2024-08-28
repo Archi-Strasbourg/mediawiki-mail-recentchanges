@@ -23,7 +23,7 @@ require_once __DIR__.'/vendor/autoload.php';
 date_default_timezone_set('Europe/Paris');
 
 
-
+//paramètre les fonctions de template
 $smarty = new \Smarty();
 $smarty->setTemplateDir(__DIR__.'/templates/');
 $smarty->setCompileDir(__DIR__.'/templates_c/');
@@ -111,6 +111,7 @@ if (php_sapi_name() == 'cli') {
     $climate->arguments->parse();
 }
 
+//paramètre l'api
 $apiUrl = $params->get('apiUrl');
 if (!isset($apiUrl)) {
     echo 'no api url';
@@ -141,6 +142,8 @@ $siteInfo = $api->getRequest(
             ]
         )
 );
+
+//fonction pour trouver l'index d'un élément dans un tableau de pageid ou -1 si l'élément n'est pas trouvé
 function findInArray($array, $id)
 {
     foreach ($array as $i => $item) {
@@ -152,9 +155,11 @@ function findInArray($array, $id)
 }
 
 $changeLists = [];
-foreach (array_map('intval', explode(',', $params->get('namespaces'))) as $namespace) {
+foreach (array_map('intval', explode(',', $params->get('namespaces'))) as $namespace) { //deux namespase : Personne et adresse
     $endDate = new \DateTime();
-    $endDate->sub(new \DateInterval('P1W'));
+    $endDate->sub(new \DateInterval('P1W')); //cherche sur la dernière semaine
+
+    //toutes les modifs et nouvelles pages
     $recentChangesTMP = $api->getRequest(
         FluentRequest::factory()
             ->setAction('query')
@@ -172,7 +177,7 @@ foreach (array_map('intval', explode(',', $params->get('namespaces'))) as $names
             )
     );
 
-    //cumule les changements par page et répartie les nouveaux articles et les modifications
+    //cumule les changements par page et sépare les nouveaux articles et les articles modifiés
     $recentChanges =[];
     $newArticles=[];
     $newArticles['query']['recentchanges']=[];
@@ -194,9 +199,8 @@ foreach (array_map('intval', explode(',', $params->get('namespaces'))) as $names
         }
     }
 
+    //créer la liste qui sera utilisé par le template
     $changeList = new ChangeList($recentChanges['query']['recentchanges'], $newArticles['query']['recentchanges']);
-
-    
     if ($namespace == 0) {
         $changeLists[null] = $changeList->getAll();
     } elseif (in_array($namespace, explode(',', $params->get('nsgroupby')))) {
@@ -209,7 +213,7 @@ foreach (array_map('intval', explode(',', $params->get('namespaces'))) as $names
 }
 
 
-
+//cherche tout les utilisateurs sauf ceux désinscrits de l'alerte mail
 $users = $api->getRequest(
     FluentRequest::factory()
         ->setAction('query')
@@ -234,12 +238,14 @@ foreach ($siteInfo['query']['extensions'] as $extension) {
 $logger = new Logger($climate);
 $services = new MediawikiFactory($api);
 
+//récupère l'url du site
 $baseUrl = str_replace(
     $siteInfo['query']['general']['mainpage'],
     '',
     urldecode($siteInfo['query']['general']['base'])
 );
 
+//récupère le text d'intro de l'alerte mail disponible à la page donnée en paramètre "intro"
 $title = $params->get('title');
 $introTitle = $params->get('intro');
 $intro = '';
@@ -272,7 +278,7 @@ $intro = preg_replace_callback('/<br\s*\/?>/', 'MediawikiMailRecentChanges\test'
 
 
 
-
+//cherche le plus gros changement par ville
 foreach($changeLists['Adresse'] as &$ville){
     $biggestChangeNum=-99999;
     $biggestChange='fail';
@@ -282,6 +288,8 @@ foreach($changeLists['Adresse'] as &$ville){
                 $biggestChangeNum=$adresse['newlen']-$adresse['oldlen'];
                 $biggestChange=$adresse['title'];
             }
+
+            //on en profite pour récupérer le quartier de l'adresse
             $categories = $api->getRequest(
                 FluentRequest::factory()
                     ->setAction('query')
@@ -347,6 +355,8 @@ foreach($changeLists['Adresse'] as &$ville){
         }
         unset($adresse);
     }
+
+    //récupère le lien de l'image du plus gros changement
     if($biggestChange!='fail'){
         $image = $api->getRequest(
             FluentRequest::factory()
@@ -364,14 +374,14 @@ foreach($changeLists['Adresse'] as &$ville){
                 ->setAction('parse')
                 ->addParams(
                     [
-                        'text' => '[['.$image.'|x250px]]'
+                        'text' => '[['.$image.'|x250px]]' //250px de haut pour avoir une image de taille raisonnable
                     ]
                 )
         );
         $image=$image['parse']['text']['*'];
         if(strpos($image,'Image-manquante')==false){
             $imageSource = '';
-            preg_match('/src="([^"]+)"/', $image, $matches);
+            preg_match('/src="([^"]+)"/', $image, $matches); //récupère uniquement le lien de l'image
             if (isset($matches[1])) {
                 $imageSource = $matches[1];
             }
@@ -452,6 +462,7 @@ foreach($changeLists['Personne'] as &$Personne){
 }
 unset($ville); 
 
+//donne les paramètres au template
 $smarty->assign(
     [
         'changeLists' => $changeLists,
@@ -465,6 +476,7 @@ $smarty->assign(
     ]
 );
 
+//envoie le mail avec le template
 if (php_sapi_name() == 'apache2handler') {
     $smarty->display('mail.tpl');
 } else {
