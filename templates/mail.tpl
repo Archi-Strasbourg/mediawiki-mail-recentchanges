@@ -54,7 +54,7 @@
                             {/if}
                         </td></tr></table>
                     
-                    {if {$group.biggestChange}}<div style="float:right;"><a href="{$wiki.url}{$group.biggestChange|escape:url}" style="color:#34414a;text-decoration: none; margin-right:0px;text-align:center;"><img src="{$group.image}" height="250px" style="margin:auto;"/><p style="margin:0px;color:#34414a;text-decoration: none;">{$group.biggestChange}</p></a></div>{/if}</td>
+                    {if isset($group.biggestChange)}<div style="float:right;"><a href="{$wiki.url}{$group.biggestChange|escape:url}" style="color:#34414a;text-decoration: none; margin-right:0px;text-align:center;"><img src="{$group.image}" height="250px" style="margin:auto;"/><p style="margin:0px;color:#34414a;text-decoration: none;">{$group.biggestChange}</p></a></div>{/if}</td>
                 </tr></table>
             {/foreach}
         {/foreach}
