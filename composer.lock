@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "20f7899a7c04d79fb19a339fb9f65086",
+    "content-hash": "21ab93eaba5ea2f720bca93e8ec55148",
     "packages": [
         {
             "name": "addwiki/mediawiki-api",
@@ -1168,11 +1168,11 @@
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
-        "php": ">=7.4"
+        "php": ">=8.2"
     },
     "platform-dev": {},
     "platform-overrides": {
-        "php": "7.4.33"
+        "php": "8.2.26"
     },
     "plugin-api-version": "2.6.0"
 }

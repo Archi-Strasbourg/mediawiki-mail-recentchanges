@@ -3,7 +3,7 @@
   "description": "Send recent changes to every user of your wiki",
   "license": "GPL-3.0",
   "require": {
-    "php": ">=7.4",
+    "php": ">=8.2",
     "league/climate": "~3.2.1",
     "addwiki/mediawiki-api-base": "~2.2.0",
     "addwiki/mediawiki-api": "~0.7.1",
@@ -21,7 +21,7 @@
   },
   "config": {
     "platform": {
-      "php": "7.4.33"
+      "php": "8.2.26"
     }
   }
 }
