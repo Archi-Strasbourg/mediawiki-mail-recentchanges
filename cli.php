@@ -480,15 +480,14 @@ $smarty->assign(
 if (php_sapi_name() == 'apache2handler') {
     $smarty->display('mail.tpl');
 } else {
-    $html = $smarty->fetch('mail.tpl');
     $target = $params->get('target');
-    $mailer = new Mailer($api, $emailApiName, $logger);
+    $mailer = new Mailer($api, $emailApiName, $logger, $smarty);
     if (isset($target)) {
-        $mailer->send($target, $html, $title);
+        $mailer->send($target, $title);
     } else {
         foreach ($users['query']['allusers'] as $user) {
             if (!isset($user['blockid'])) {
-                $mailer->send($user['name'], $html, $title);
+                $mailer->send($user['name'], $title);
             }
         }
     }

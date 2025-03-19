@@ -58,5 +58,5 @@
                 </tr></table>
             {/foreach}
         {/foreach}
-        <p>Pour ne plus recevoir les alertes mail, il vous suffit de vous rendre sur <a href="{$wiki.url}DésinscriptionAlerteMail" target="_blank">cette page</a>.</p>
+        <p>Pour ne plus recevoir les alertes mail, il vous suffit de vous rendre sur <a href="{$unsubscribeUrl|escape}" target="_blank">cette page</a>.</p>
 </body>
