@@ -338,7 +338,7 @@ foreach($changeLists['Adresse'] as &$ville){
             );
 
             foreach($categories['query']['pages'] as $page){
-                $categories = array_reverse($page['categories']);
+                $categories = array_reverse($page['categories'] ?? []);
                 if(isset($categories[2])){
                     if (($categories[2] != $categories[0]) && ($categories[2] != $categories[1])) {
                         $colonIndex = strpos($categories[2], ':');
@@ -368,29 +368,32 @@ foreach($changeLists['Adresse'] as &$ville){
                 )
         );
 
-        $image= $image['query']['results'][array_keys($image['query']['results'])[0]]['printouts']['Image principale'][0]['fulltext'];
-        $image=$api->getRequest(
-            FluentRequest::factory()
-                ->setAction('parse')
-                ->addParams(
-                    [
-                        'text' => '[['.$image.'|x250px]]' //250px de haut pour avoir une image de taille raisonnable
-                    ]
-                )
-        );
-        $image=$image['parse']['text']['*'];
-        if(strpos($image,'Image-manquante')==false){
-            $imageSource = '';
-            preg_match('/src="([^"]+)"/', $image, $matches); //récupère uniquement le lien de l'image
-            if (isset($matches[1])) {
-                $imageSource = $matches[1];
-            }
-            if(substr($imageSource, 0, 4) === 'http'){
-                $ville['image'] = $imageSource;
-                $ville['biggestChange'] = $biggestChange;
-            } else {
-                $ville['image'] = $baseUrl.$imageSource;
-                $ville['biggestChange'] = $biggestChange;
+        $imageInfo = $image['query']['results'][array_keys($image['query']['results'])[0]]['printouts']['Image principale'];
+        if (isset($imageInfo[0])) {
+            $image = $imageInfo[0]['fulltext'];
+            $image = $api->getRequest(
+                FluentRequest::factory()
+                    ->setAction('parse')
+                    ->addParams(
+                        [
+                            'text' => '[[' . $image . '|x250px]]' //250px de haut pour avoir une image de taille raisonnable
+                        ]
+                    )
+            );
+            $image = $image['parse']['text']['*'];
+            if (strpos($image, 'Image-manquante') == false) {
+                $imageSource = '';
+                preg_match('/src="([^"]+)"/', $image, $matches); //récupère uniquement le lien de l'image
+                if (isset($matches[1])) {
+                    $imageSource = $matches[1];
+                }
+                if (substr($imageSource, 0, 4) === 'http') {
+                    $ville['image'] = $imageSource;
+                    $ville['biggestChange'] = $biggestChange;
+                } else {
+                    $ville['image'] = $baseUrl . $imageSource;
+                    $ville['biggestChange'] = $biggestChange;
+                }
             }
         }
     }
