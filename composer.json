@@ -5,10 +5,10 @@
   "require": {
     "php": ">=8.2",
     "league/climate": "~3.2.1",
-    "addwiki/mediawiki-api": "~0.7.1",
-    "psr/log": "~1.0.0",
+    "psr/log": "^3.0",
     "smarty/smarty": "^4.5",
-    "html2text/html2text": "~4.0.1"
+    "html2text/html2text": "~4.0.1",
+    "addwiki/addwiki": "^4.0"
   },
   "require-dev": {
     "squizlabs/php_codesniffer": "~2.8.1"

@@ -6,7 +6,7 @@ use League\CLImate\CLImate;
 
 class ParameterManager
 {
-    private $climate;
+    private CLImate $climate;
 
     public function __construct(CLImate $climate)
     {
@@ -15,10 +15,6 @@ class ParameterManager
 
     public function get($parameter)
     {
-        if (isset($_GET[$parameter])) {
-            return $_GET[$parameter];
-        } else {
-            return $this->climate->arguments->get($parameter);
-        }
+        return $_GET[$parameter] ?? $this->climate->arguments->get($parameter);
     }
 }

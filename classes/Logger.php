@@ -7,8 +7,8 @@ use Psr\Log\AbstractLogger;
 
 class Logger extends AbstractLogger
 {
-    private $climate;
-    private $debug = false;
+    private CLImate $climate;
+    private bool $debug = false;
 
     public function __construct(CLImate $climate)
     {
@@ -18,7 +18,7 @@ class Logger extends AbstractLogger
         }
     }
 
-    public function log($level, $message, array $context = [])
+    public function log($level, $message, array $context = []): void
     {
         if ($this->debug) {
             switch ($level) {
@@ -32,7 +32,5 @@ class Logger extends AbstractLogger
                     $this->climate->out($message);
             }
         }
-
-        return $message;
     }
 }

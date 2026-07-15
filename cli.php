@@ -5,15 +5,11 @@ namespace MediawikiMailRecentChanges;
 
 
 
+use Addwiki\Mediawiki\Api\Client\Action\Request\ActionRequest;
+use Addwiki\Mediawiki\Api\Client\Auth\UserAndPassword;
+use Addwiki\Mediawiki\Api\Client\MediaWiki;
+use Addwiki\Mediawiki\Api\MediawikiFactory;
 use League\CLImate\CLImate;
-use Mediawiki\Api\ApiUser;
-use Mediawiki\Api\FluentRequest;
-use Mediawiki\Api\MediawikiApi;
-use Mediawiki\Api\MediawikiFactory;
-use Mediawiki\Api\UsageException;
-use DateTime;
-use Exception;
-use User;
 
 require_once __DIR__.'/vendor/autoload.php';
 
@@ -118,23 +114,11 @@ if (!isset($apiUrl)) {
     throw new \Exception('Missing API URL');
 }
 
-$api = MediawikiApi::newFromApiEndpoint($apiUrl);
-try{
-    $api->login(
-    new ApiUser(
-        $params->get('username'),
-        $params->get('password')
-    )
-    );
-} catch (UsageException $e) {
-    echo "login : ".$e->getMessage();
-    die;
-}
+$api = MediaWiki::newFromEndpoint($apiUrl, new UserAndPassword($params->get('username'), $params->get('password')));
+$actionApi = $api->action();
 
-
-$siteInfo = $api->getRequest(
-    FluentRequest::factory()
-        ->setAction('query')
+$siteInfo = $actionApi->request(
+    ActionRequest::simpleGet('query')
         ->addParams(
             [
                 'meta'   => 'siteinfo',
@@ -144,7 +128,7 @@ $siteInfo = $api->getRequest(
 );
 
 //fonction pour trouver l'index d'un élément dans un tableau de pageid ou -1 si l'élément n'est pas trouvé
-function findInArray($array, $id)
+function findInArray($array, $id): int|string
 {
     foreach ($array as $i => $item) {
         if ($item['pageid'] == $id) {
@@ -160,9 +144,8 @@ foreach (array_map('intval', explode(',', $params->get('namespaces'))) as $names
     $endDate->sub(new \DateInterval('P1W')); //cherche sur la dernière semaine
 
     //toutes les modifs et nouvelles pages
-    $recentChangesTMP = $api->getRequest(
-        FluentRequest::factory()
-            ->setAction('query')
+    $recentChangesTMP = $actionApi->request(
+        ActionRequest::simpleGet('query')
             ->addParams(
                 [
                     'list'        => 'recentchanges',
@@ -189,7 +172,7 @@ foreach (array_map('intval', explode(',', $params->get('namespaces'))) as $names
             $indice2=findInArray($newArticles['query']['recentchanges'], $change['pageid']);
             if($indice2==-1 && $change['type']=='new'){
                 $newArticles['query']['recentchanges'][] = $change;
-            } else if ($indice2==-1){
+            } elseif ($indice2==-1){
                 $recentChanges['query']['recentchanges'][] = $change;
             } else {
                 $newArticles['query']['recentchanges'][$indice2]['newlen'] = $change['newlen'];
@@ -214,9 +197,8 @@ foreach (array_map('intval', explode(',', $params->get('namespaces'))) as $names
 
 
 //cherche tout les utilisateurs sauf ceux désinscrits de l'alerte mail
-$users = $api->getRequest(
-    FluentRequest::factory()
-        ->setAction('query')
+$users = $actionApi->request(
+    ActionRequest::simpleGet('query')
         ->addParams(
             [
                 'list'    => 'allusers',
@@ -236,7 +218,7 @@ foreach ($siteInfo['query']['extensions'] as $extension) {
 }
 
 $logger = new Logger($climate);
-$services = new MediawikiFactory($api);
+$services = new MediawikiFactory($actionApi);
 
 //récupère l'url du site
 $baseUrl = str_replace(
@@ -290,9 +272,8 @@ foreach($changeLists['Adresse'] as &$ville){
             }
 
             //on en profite pour récupérer le quartier de l'adresse
-            $categories = $api->getRequest(
-                FluentRequest::factory()
-                    ->setAction('query')
+            $categories = $actionApi->request(
+                ActionRequest::simpleGet('query')
                     ->addParams(
                         [
                             'prop' => 'archiCategoryTree',
@@ -308,7 +289,7 @@ foreach($changeLists['Adresse'] as &$ville){
                         $colonIndex = strpos($categories[2], ':');
                         $parenthesisIndex = strrpos($categories[2], '_('.substr($categories[1], strpos($categories[1], ':')+1));
                         $adresse['quartier'] = substr($categories[2], $colonIndex + 1, $parenthesisIndex - $colonIndex - 1);
-                    } else if (isset($categories[4]) && ($categories[2] == $categories[0])){
+                    } elseif (isset($categories[4]) && ($categories[2] == $categories[0])){
                         $colonIndex = strpos($categories[4], ':');
                         $parenthesisIndex = strrpos($categories[4], '_('.substr($categories[3], strpos($categories[3], ':')+1));
                         $adresse['quartier'] = substr($categories[4], $colonIndex + 1, $parenthesisIndex - $colonIndex - 1);
@@ -326,9 +307,8 @@ foreach($changeLists['Adresse'] as &$ville){
                 $biggestChangeNum=$adresse['newlen']-$adresse['oldlen'];
                 $biggestChange=$adresse['title'];
             }
-            $categories = $api->getRequest(
-                FluentRequest::factory()
-                    ->setAction('query')
+            $categories = $actionApi->request(
+                ActionRequest::simpleGet('query')
                     ->addParams(
                         [
                             'prop' => 'archiCategoryTree',
@@ -344,7 +324,7 @@ foreach($changeLists['Adresse'] as &$ville){
                         $colonIndex = strpos($categories[2], ':');
                         $parenthesisIndex = strrpos($categories[2], '_('.substr($categories[1], strpos($categories[1], ':')+1));
                         $adresse['quartier'] = substr($categories[2], $colonIndex + 1, $parenthesisIndex - $colonIndex - 1);
-                    } else if (isset($categories[4]) && ($categories[2] == $categories[0])){
+                    } elseif (isset($categories[4]) && ($categories[2] == $categories[0])){
                         $colonIndex = strpos($categories[4], ':');
                         $parenthesisIndex = strrpos($categories[4], '_('.substr($categories[1], strpos($categories[3], ':')+1));
                         $adresse['quartier'] = substr($categories[4], $colonIndex + 1, $parenthesisIndex - $colonIndex - 1);
@@ -358,9 +338,8 @@ foreach($changeLists['Adresse'] as &$ville){
 
     //récupère le lien de l'image du plus gros changement
     if($biggestChange!='fail'){
-        $image = $api->getRequest(
-            FluentRequest::factory()
-                ->setAction('ask')
+        $image = $actionApi->request(
+            ActionRequest::simpleGet('ask')
                 ->addParams(
                     [
                         'query' => '[['.$biggestChange.']]|?Image principale|limit=1'
@@ -371,9 +350,8 @@ foreach($changeLists['Adresse'] as &$ville){
         $imageInfo = $image['query']['results'][array_keys($image['query']['results'])[0]]['printouts']['Image principale'];
         if (isset($imageInfo[0])) {
             $image = $imageInfo[0]['fulltext'];
-            $image = $api->getRequest(
-                FluentRequest::factory()
-                    ->setAction('parse')
+            $image = $actionApi->request(
+                ActionRequest::simpleGet('parse')
                     ->addParams(
                         [
                             'text' => '[[' . $image . '|x250px]]' //250px de haut pour avoir une image de taille raisonnable
@@ -381,19 +359,18 @@ foreach($changeLists['Adresse'] as &$ville){
                     )
             );
             $image = $image['parse']['text']['*'];
-            if (strpos($image, 'Image-manquante') == false) {
+            if (!str_contains($image, 'Image-manquante')) {
                 $imageSource = '';
                 preg_match('/src="([^"]+)"/', $image, $matches); //récupère uniquement le lien de l'image
                 if (isset($matches[1])) {
                     $imageSource = $matches[1];
                 }
-                if (substr($imageSource, 0, 4) === 'http') {
+                if (str_starts_with($imageSource, 'http')) {
                     $ville['image'] = $imageSource;
-                    $ville['biggestChange'] = $biggestChange;
                 } else {
                     $ville['image'] = $baseUrl . $imageSource;
-                    $ville['biggestChange'] = $biggestChange;
                 }
+                $ville['biggestChange'] = $biggestChange;
             }
         }
     }
@@ -423,9 +400,8 @@ foreach($changeLists['Personne'] as &$Personne){
         unset($adresse);
     }
     if($biggestChange!='fail'){
-        $image = $api->getRequest(
-            FluentRequest::factory()
-                ->setAction('ask')
+        $image = $actionApi->request(
+            ActionRequest::simpleGet('ask')
                 ->addParams(
                     [
                         'query' => '[['.$biggestChange.']]|?Image principale|limit=1'
@@ -436,8 +412,8 @@ foreach($changeLists['Personne'] as &$Personne){
             echo "no image found for ".$biggestChange."\n";
         } else {
             $image= $image['query']['results'][array_keys($image['query']['results'])[0]]['printouts']['Image principale'][0]['fulltext'];
-            $image=$api->getRequest(
-                FluentRequest::factory()
+            $image = $actionApi->request(
+                ActionRequest::simpleGet('parse')
                     ->setAction('parse')
                     ->addParams(
                         [
@@ -447,18 +423,17 @@ foreach($changeLists['Personne'] as &$Personne){
             );
             $image=$image['parse']['text']['*'];
             $imageSource = '';
-            if(strpos($image, 'Image-manquante')==false){
+            if(!str_contains($image, 'Image-manquante')){
                 preg_match('/src="([^"]+)"/', $image, $matches);
                 if (isset($matches[1])) {
                     $imageSource = $matches[1];
                 }
-                if(substr($imageSource, 0, 4) === 'http'){
+                if(str_starts_with($imageSource, 'http')){
                     $Personne['image'] = $imageSource;
-                    $Personne['biggestChange'] = $biggestChange;
                 } else {
                     $Personne['image'] = $baseUrl.$imageSource;
-                    $Personne['biggestChange'] = $biggestChange;
                 }
+                $Personne['biggestChange'] = $biggestChange;
             }
         }
     }

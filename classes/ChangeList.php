@@ -4,8 +4,8 @@ namespace MediawikiMailRecentChanges;
 
 class ChangeList
 {
-    private $edits;
-    private $newArticles;
+    private array $edits;
+    private array $newArticles;
 
     public function __construct(array $edits, array $newArticles)
     {
@@ -26,7 +26,7 @@ class ChangeList
      * @param array $b
      * @return int
      */
-    private function sortByStreet(array $a, array $b)
+    private function sortByStreet(array $a, array $b): int
     {
         return strnatcasecmp($a['shortTitle'], $b['shortTitle']);
     }
@@ -35,7 +35,7 @@ class ChangeList
      * @param string $groupBy
      * @return array
      */
-    public function getAll($groupBy = '')
+    public function getAll(string $groupBy = ''): array
     {
         $return = [];
         foreach ($this->edits as $change) {

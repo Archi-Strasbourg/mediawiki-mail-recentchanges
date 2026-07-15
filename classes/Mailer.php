@@ -2,31 +2,31 @@
 
 namespace MediawikiMailRecentChanges;
 
+use Addwiki\Mediawiki\Api\Client\Action\Exception\UsageException;
+use Addwiki\Mediawiki\Api\Client\Action\Request\ActionRequest;
+use Addwiki\Mediawiki\Api\Client\MediaWiki;
 use Html2Text\Html2Text;
-use Mediawiki\Api\FluentRequest;
-use Mediawiki\Api\MediawikiApi;
-use Mediawiki\Api\UsageException;
 use Smarty;
 use SmartyException;
 
 class Mailer
 {
-    private MediawikiApi $api;
+    private MediaWiki $api;
     private string $emailApiName;
     private string $token;
     private Logger $logger;
 
     /**
-     * @param MediawikiApi $api
+     * @param MediaWiki $api
      * @param string $emailApiName
      * @param Logger $logger
      * @param Smarty $smarty
      */
-    public function __construct(MediawikiApi $api, string $emailApiName, Logger $logger, private readonly Smarty $smarty)
+    public function __construct(MediaWiki $api, string $emailApiName, Logger $logger, private readonly Smarty $smarty)
     {
         $this->api = $api;
         $this->emailApiName = $emailApiName;
-        $this->token = $api->getToken('email');
+        $this->token = $api->action()->getToken('email');
         $this->logger = $logger;
     }
 
@@ -35,12 +35,13 @@ class Mailer
      * @param string $title
      * @return void
      * @throws SmartyException
+     * @noinspection PhpRedundantCatchClauseInspection
      */
     public function send(string $user, string $title): void
     {
-        $unsubscribeInfo = $this->api->getRequest(
-            FluentRequest::factory()
-                ->setAction('query')
+        $actionApi = $this->api->action();
+        $unsubscribeInfo = $actionApi->request(
+            ActionRequest::simpleGet('query')
                 ->addParams(
                     [
                         'prop' => 'archiUnsubscribeLink',
@@ -53,9 +54,8 @@ class Mailer
         $plaintext = new Html2Text($html);
 
         try {
-            $this->api->postRequest(
-                FluentRequest::factory()
-                    ->setAction($this->emailApiName)
+            $actionApi->request(
+                ActionRequest::simplePost($this->emailApiName)
                     ->addParams(
                         [
                             'token'   => $this->token,
@@ -66,11 +66,11 @@ class Mailer
                         ]
                     )
             );
-            $this->logger->info('E-mail sent to '.$user);
+            $this->logger->info('E-mail sent to ' . $user);
 
             return;
         } catch (UsageException $e) {
-            $this->logger->error("Can't send e-mail to ".$user.': '.$e->getMessage());
+            $this->logger->error("Can't send e-mail to " . $user . ': ' . $e->getMessage());
 
             return;
         }
