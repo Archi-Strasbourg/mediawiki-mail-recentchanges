@@ -10,9 +10,6 @@
     "html2text/html2text": "~4.0.1",
     "addwiki/addwiki": "^4.0"
   },
-  "require-dev": {
-    "squizlabs/php_codesniffer": "~2.8.1"
-  },
   "autoload": {
     "psr-4": {
       "MediawikiMailRecentChanges\\": "classes/"
